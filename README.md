@@ -1,6 +1,6 @@
-## ❒ Gridsort — Multi dimensional sort for point clouds
+## ❒ Gridpoints — Multi dimensional sort for point clouds
 
-Gridsort maps unstructured **point clouds** to structured grids through a **bijective transformation**: one point, one cell, no overlap, fully invertible. It replaces and enhances the squarenet project with a faster sorting algorithm.
+`Gridpoints` maps unstructured **point clouds** to structured grids through a **bijective transformation**: one point, one cell, no overlap, fully invertible. It replaces and enhances the squarenet project with a faster sorting algorithm.
 
 Take raw point cloud `X(N, D)`  
 → find a grid shape and a permutation `order` such that  
@@ -27,14 +27,14 @@ Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 100 ms
 ### Installation
 
 ```bash
-pip install gridsort          # core only
-pip install gridsort[demo]    # for the demonstration notebook, see `notebook.ipynb`
+pip install gridpoints          # core only
+pip install gridpoints[demo]    # for the demonstration notebook, see `notebook.ipynb`
 ```
 
 ### Quickstart
 
 ```python
-import gridsort as grid
+import gridpoints as grid
 import numpy as np
 
 # Raw point cloud (numpy, pytorch or cupy)
@@ -54,22 +54,19 @@ orderinv = grid.invert_permutation(order)
 Z = Zflat[orderinv]   # matches the initial points order
 ```
 
----
-
-
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
 ---
 
 ### Note on the cutoff radius R
 
-There is no strict theoretical guarantee about what the cutof radius R should be for a given task. E.g the relative grid position between a point and its nearest neighbors can't be garanted to be in the exact adjacent grid cells. What is guaranteed from the gridsort ordering is only **grid monotonicity**: *x* coordinates increase along rows, *y* coordinates along columns, and so on.
+There is no strict theoretical guarantee about what the cutof radius R should be for a given task. E.g the relative grid position between a point and its nearest neighbors can't be garanted to be in the exact adjacent grid cells. What is guaranteed from the sorted ordering is only **grid monotonicity**: *x* coordinates increase along rows, *y* coordinates along columns, and so on.
 
 As an example, empirical results in 2-D show that `R = 5` is enough for ~99 % of the nearest neighbors; some outlier neighbors will sit further apart for complex geometries with pronounced peaks, holes or any non-smoothness. When a stricter neighborhood is required, or in high dimensional setting, the best practice is to build an assembly of grid experts, each working on a rotated / projected view of the points, as discussed in [this topic](https://github.com/glotzerlab/freud/discussions/1417).
 
 ### Note on efficient stencil operations
 
-The typical use-case of `gridsort` is to allow fast local operations on arbitrary point clouds using stencil kernels:
+The typical use-case of `Gridpoints` is to allow fast local operations on arbitrary point clouds using stencil kernels:
 
 ```text
 output(i, j, k) = f( Xgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )

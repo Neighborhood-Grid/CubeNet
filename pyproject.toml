@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gridsort"
+name = "gridpoints"
 version = "1.0.0"
 description = "fast multidimensional sorting tool for point clouds using the monotonic lagrangian grid "
 readme = "README.md"
