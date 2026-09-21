@@ -18,7 +18,7 @@ from .kdtree import kdtree_order
 #                   Sorting API
 # ============================================
 
-def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
+def argsort(X, gridshape, level=2, init="kdtree", n_iter=40, verbose = 2):
     """Compute a multi-directional monotonic sorted ordering of a point cloud.
 
     Parameters
@@ -40,7 +40,7 @@ def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
     init : {'kdtree', 'shuffle'} or None, default="kdtree"
         Initialization method for the permutation order. Try init = None
         if the point cloud is already nearly sorted.
-    n_iter : int, default=50
+    n_iter : int, default=40
         Maximum number of optimization iterations.
     verbose : int, default 2
         0 = silent, 1 = log progress, 2 = 1 + warn if convergence failed
@@ -50,9 +50,6 @@ def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
     order : ndarray of shape (N,)
         Permutation indices such that `X[order].reshape(*shape, D)` forms a 
         monotonically sorted grid.
-    converged : bool
-        `True` if the algorithm converged within `n_iter` iterations, `False` otherwise.
-        If not converged, the fonction will also raise a convergence warning
     """
     N, D = X.shape
     assert math.prod(gridshape) == N
@@ -65,9 +62,8 @@ def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
             order = kdtree_order(X, gridshape)
             if verbose >=1:
                 print("done")
-            converged = True
             if level == 1:
-                return order, converged
+                return order
     else:
         order = arange(len(X), 'int', reference_array=X)
     if init == "shuffle":
@@ -77,7 +73,7 @@ def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
     order = order[ordernew]
     
     if not converged:
-        while level >= 2:
+        while level >= 2 and not converged:
             level = level - 1
             ordernew, converged = _mlg_step(
                 X[order], gridshape, level=level, n_iter=n_iter, verbose = verbose
@@ -85,19 +81,19 @@ def argsort(X, gridshape, level=2, init="kdtree", n_iter=50, verbose = 2):
             order = order[ordernew]
         if not converged and verbose >=2:
             warnings.warn(
-                f"Algorithm failed to converge after {n_iter} iterations. " \
-                "Consider checking if the grid structure is already suitable" \
-                "for the given task, which is higly probable, or increase the" \
+                f"Algorithm failed to converge after {n_iter} iterations.\n " \
+                "Consider checking if the grid structure is already suitable \n" \
+                "for the given task, which is higly probable, or increase the \n" \
                 "`n_iter` parameter if strict convergence is required.",
                 category=ConvergenceWarning,
-                stacklevel=2,
+                stacklevel=2
             )
     if verbose:
         print("done")
-    return order, converged
+    return order
 
 
-def sort(X, gridshape, level=2, init="kdtree", inplace=False, n_iter=50, verbose = 2):
+def sort(X, gridshape, level=2, init="kdtree", inplace=False, n_iter=40, verbose = 2):
     """Sort a point cloud `X` using the monotonic Lagrangian algorithm.
 
     Parameters
@@ -121,7 +117,7 @@ def sort(X, gridshape, level=2, init="kdtree", inplace=False, n_iter=50, verbose
         if the point cloud is already nearly sorted.
     inplace : bool, default=False
         If True, modify the point cloud `X` in place.
-    n_iter : int, default=50
+    n_iter : int, default=40
         Maximum number of optimization iterations.
     verbose : int, default 2
          0 = silent, 1 = log progress, 2 = 1 + warn if convergence failed
@@ -132,7 +128,7 @@ def sort(X, gridshape, level=2, init="kdtree", inplace=False, n_iter=50, verbose
         The sorted point cloud such that `X_sorted.reshape(*shape, D)` forms a 
         monotonically sorted grid. Returns `None` if `inplace=True`.
     """
-    order, _ = argsort(X, gridshape, level=level, init = init, n_iter=n_iter,verbose = verbose)
+    order = argsort(X, gridshape, level=level, init = init, n_iter=n_iter,verbose = verbose)
 
     if inplace:
         X[:] = X[order]
