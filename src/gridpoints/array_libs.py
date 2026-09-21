@@ -100,8 +100,8 @@ def nan_to_num(arr):
         finite = xp.isfinite(x)
         vals = x[finite]
 
-        out[xp.isposinf(x), d] = 2 * vals.max()
-        out[xp.isneginf(x), d] = 2 * vals.min()
+        out[xp.isposinf(x), d] = vals.max() + 1
+        out[xp.isneginf(x), d] = vals.min() - 1
 
         nan = xp.isnan(x)
         n = nan.sum().item() if backend == 'torch' else int(nan.sum())
