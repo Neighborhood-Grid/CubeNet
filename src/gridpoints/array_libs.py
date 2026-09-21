@@ -10,7 +10,7 @@ like arange, copy, shuffle etc.
 _FLOAT = 'float32'
 _INT = 'int32'
 
-EPS = 10**(-10)
+EPS = 10**(-5)
 
 
 def get_dtype(dtp, xp):
