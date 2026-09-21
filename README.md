@@ -57,7 +57,7 @@ Z = Zflat[orderinv]   # matches the initial points order
 ---
 
 
-<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/ballgrid.png">
+<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
 ---
 
