@@ -14,7 +14,7 @@ z[i, j, k+1] >= z[i, j, k]
 neighborhood[i, j, k] = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
 ````
 where `R` is a radius cutoff to determine, allowing local operations in linear time.  
-→ Standard operations (grid convolution, clustering, …) can then be applied  
+→ Standard operations (convolution, clustering, …) can then be applied  
 directly on the `Pgrid` view instead of relying on complex graph convolutions  
 or other point-cloud techniques.
 
