@@ -26,7 +26,7 @@ NaNs and Infs are supported in a consistent manner:
   
 This allow to gridsort prime or variable number of points N, as long as one is ready to deal with void/special grid cells.
 
-Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 500 ms
+Expected runtime for sorting 1 million points: CPU → < 10s (numpy), GPU → < 500 ms (torch cuda)
 
 ---
 
