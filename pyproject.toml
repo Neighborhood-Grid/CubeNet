@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gridsort"
+version = "1.0.0"
+description = "fast multidimensional sorting tool for point clouds using the monotonic lagrangian grid "
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Armand de Cacqueray"}
+]
+keywords = ["sorting", "point-clouds", "multi-indexing", "grid", 
+            "neighborhood-grid", "monotonic-lagrangian-grid", 
+            "squarenet", "nearest-neighbor",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+demo = [
+    "squarenet",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/Neighborhood-Grid/CubeNet"
+Repository = "https://github.com/Neighborhood-Grid/CubeNet"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.ipynb"]
