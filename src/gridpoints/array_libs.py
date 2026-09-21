@@ -43,9 +43,11 @@ def astype(X, dtype_str, reference_array=None):
 
 
 def inplace_sort(X, axis):
-    _, backend_name = get_backend(X)
+    xp, backend_name = get_backend(X)
     if backend_name == 'torch':
         X.copy_(X.sort(dim=axis)[0])
+    if backend_name == "cupy":
+        X[...] = xp.sort(xp.ascontiguousarray(X), axis=axis)
     else:
         X.sort(axis=axis)
 

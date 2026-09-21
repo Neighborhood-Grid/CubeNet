@@ -183,6 +183,7 @@ def _sort_along_direction(X, direction):
 
     elif level == 2:
         ax0, ax1 = xp.where(direction != 0)[0]
+        ax0, ax1 = int(ax0), int(ax1)
         Y = xp.moveaxis(X, [ax0, ax1], [-2, -1])
         flipaxes = []
         for ax, _ax in zip([ax0, ax1], [-2, -1]):
@@ -195,6 +196,7 @@ def _sort_along_direction(X, direction):
 
     elif level == 3:
         ax0, ax1, ax2 = xp.where(direction != 0)[0]
+        ax0, ax1, ax2 = int(ax0), int(ax1), int(ax2)
         Y = xp.moveaxis(X, [ax0, ax1, ax2], [-3, -2, -1])
         flipaxes = []
         for ax, _ax in zip([ax0, ax1, ax2], [-3, -2, -1]):

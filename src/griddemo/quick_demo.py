@@ -61,7 +61,10 @@ def show_result(X, animate=False):
         print("Missing dependencies for the demo. pip install gridsort[demo]")
     from squarenet import SquareNet
     import numpy as np
-    X = np.asarray(X)
+    try:
+        X = np.asarray(X)
+    except:
+        print("Array still on GPU, move it back to gpu first befor showing e.g. show_result(X.cpu())")
     sn = SquareNet(gridshape = X.shape[:-1])
     sn.pointsmaped = X
     sn.plot(style = "mesh", animate = animate, save = animate)
@@ -83,7 +86,10 @@ def print_zoom(Ygrid, center, side=1):
         Number of cells shown on each side of the center.
     """
     import numpy as np
-    Ygrid = np.asarray(Ygrid)
+    try:
+        Ygrid = np.asarray(Ygrid)
+    except:
+        print("Array still on GPU, move it back to gpu first befor showing e.g. print_zoom(X.cpu())")
     ndim = Ygrid.ndim - 1
     if ndim not in (2, 3):
         raise ValueError("printzoom only for 2D/3D grids")
@@ -102,14 +108,14 @@ def print_zoom(Ygrid, center, side=1):
     else:
         i, j, k = center
         print("axis 0:")
-        for ii in range(i-len, i+side+1):
+        for ii in range(i-side, i+side+1):
             print(_format_point(Ygrid[ii, j, k]), end=" ")
         print()
         print("axis 1:")
-        for jj in range(j-len, j+side+1):
+        for jj in range(j-side, j+side+1):
             print(_format_point(Ygrid[i, jj, k]), end=" ")
         print()
         print("axis 2:")
-        for kk in range(k-len, k+side+1):
+        for kk in range(k-side, k+side+1):
             print(_format_point(Ygrid[i, j, kk]), end=" ")
         print()

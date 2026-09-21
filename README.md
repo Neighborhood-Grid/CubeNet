@@ -2,17 +2,24 @@
 
 `Gridpoints` maps unstructured **point clouds** to structured grids through a **bijective transformation**: one point, one cell, no overlap, fully invertible. It replaces and enhances the squarenet project with a faster sorting algorithm.
 
-Take raw point cloud `X(N, D)`  
-→ find a grid shape and a permutation `order` such that  
-Xgrid = X[order].reshape(*gridshape, D) is sorted along every axis of the grid.  
-→ On the `Xgrid` view of `X`, neighbor queries become a simple stencil look-up  
-neighborhood[i, j, k] = {Xgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R}, where `R` is a radius cutoff to determine,  
-allowing local operations in linear time.  
+Take raw point cloud `P(N, D)`  
+→ find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) 
+is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
+```text
+x[i+1, j, k] >= x[i, j, k]
+y[i, j+1, k] >= y[i, j, k]
+z[i, j, k+1] >= z[i, j, k]
+```
+→ On the `Pgrid` view of `P`, neighbor queries become a simple stencil look-up :
+```text
+neighborhood[i, j, k] = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
+````
+where `R` is a radius cutoff to determine, allowing local operations in linear time.  
 → Standard operations (grid convolution, clustering, …) can then be applied  
-directly on the `Xgrid` view instead of relying on complex graph convolutions  
+directly on the `Pgrid` view instead of relying on complex graph convolutions  
 or other point-cloud techniques.
 
-`X` can be a NumPy, PyTorch or CuPy array of any dimension (N, D).  
+`P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D).  
 To allow natural padding when the grid has more cells than points,  
 NaNs and Infs are supported in a consistent manner: 
 - nans → random position
@@ -20,7 +27,7 @@ NaNs and Infs are supported in a consistent manner:
 This allow to deal with prime or variable N, as long as one is ready to 
 deal with void/special grid cells.
 
-Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 100 ms
+Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 500 ms
 
 ---
 
@@ -38,20 +45,20 @@ import gridpoints as grid
 import numpy as np
 
 # Raw point cloud (numpy, pytorch or cupy)
-X = np.random.rand(1_000_000, 3)
+A = np.random.rand(1_000_000, 3)
 
 # Sorted view: place the points inside the grid
-order = grid.argsort(X, gridshape=(100, 100, 100))
-Yflat = X[order]
-Ygrid = Yflat.reshape(100, 100, 100, 3)
+order = grid.argsort(A, gridshape=(100, 100, 100))
+Bflat = A[order]
+Bgrid = Bflat.reshape(100, 100, 100, 3)
 
 # Rest of your pipeline, working with grids
-Zgrid = apply_something(Ygrid)
+Cgrid = apply_something(Bgrid)
 
 # Back to the original points indexing
-Zflat = Zgrid.reshape(-1, 2)
+Cflat = Cgrid.reshape(-1, 3)
 orderinv = grid.invert_permutation(order)
-Z = Zflat[orderinv]   # matches the initial points order
+C = Cflat[orderinv]   # matches the initial points order
 ```
 
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
@@ -69,6 +76,6 @@ As an example, empirical results in 2-D show that `R = 5` is enough for ~99 % of
 The typical use-case of `Gridpoints` is to allow fast local operations on arbitrary point clouds using stencil kernels:
 
 ```text
-output(i, j, k) = f( Xgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )
+output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )
 ```
 To go beyond standard (slow) python loops, this can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non linear grid kernels.
