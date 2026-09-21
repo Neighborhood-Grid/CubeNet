@@ -1,6 +1,6 @@
 ## ❒ Gridpoints — Multi dimensional sort for point clouds
 
-`Gridpoints` maps unstructured **point clouds** to structured grids through a **bijective transformation**: one point, one cell, no overlap, fully invertible. It replaces and enhances the squarenet project with a faster sorting algorithm.
+`Gridpoints` maps unstructured **point clouds** to structured grids through a **bijective transformation**: one point, one cell, no overlap, fully invertible. It replaces and enhances the squarenet project with a more powerfull sorting algorithm.
 
 Take raw point cloud `P(N, D)`  
 → find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) 
@@ -24,8 +24,7 @@ To allow natural padding when the grid has more cells than points,
 NaNs and Infs are supported in a consistent manner: 
 - nans → random position
 - (+-) infs → border of the grid
-This allow to deal with prime or variable N, as long as one is ready to 
-deal with void/special grid cells.
+This allow to gridsort prime or variable number of points N, as long as one is ready to deal with void/special grid cells.
 
 Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 500 ms
 
