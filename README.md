@@ -23,7 +23,7 @@ To allow natural padding when the grid has more cells than points,
 NaNs and Infs are supported in a consistent manner: 
 - nans → random position
 - (+-) infs → border of the grid
-- 
+  
 This allow to gridsort prime or variable number of points N, as long as one is ready to deal with void/special grid cells.
 
 Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 500 ms
