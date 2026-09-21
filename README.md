@@ -4,15 +4,15 @@ Gridsort maps unstructured **point clouds** to structured grids through a **bije
 
 Take raw point cloud `X(N, D)`  
 → find a grid shape and a permutation `order` such that  
-`Xgrid = X[order].reshape(*gridshape, D)` is sorted along every axis of the grid.  
+Xgrid = X[order].reshape(*gridshape, D) is sorted along every axis of the grid.  
 → On the `Xgrid` view of `X`, neighbor queries become a simple stencil look-up  
-`neighborhood[i, j, k] = {Xgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R}`, where `R` is a radius cutoff to determine,  
+neighborhood[i, j, k] = {Xgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R}, where `R` is a radius cutoff to determine,  
 allowing local operations in linear time.  
 → Standard operations (grid convolution, clustering, …) can then be applied  
 directly on the `Xgrid` view instead of relying on complex graph convolutions  
 or other point-cloud techniques.
 
-`X` can be a NumPy, PyTorch or CuPy array of any dimension `(N, D)`.  
+`X` can be a NumPy, PyTorch or CuPy array of any dimension (N, D).  
 To allow natural padding when the grid has more cells than points,  
 NaNs and Infs are supported in a consistent manner: 
 - nans → random position
@@ -30,7 +30,6 @@ Expected runtime for sorting 1 million points: CPU → < 10s, GPU → < 100 ms
 pip install gridsort          # core only
 pip install gridsort[demo]    # for the demonstration notebook, see `notebook.ipynb`
 ```
----
 
 ### Quickstart
 
@@ -58,7 +57,7 @@ Z = Zflat[orderinv]   # matches the initial points order
 ---
 
 
-<img src="ballgrid.png">
+<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/ballgrid.png">
 
 ---
 
