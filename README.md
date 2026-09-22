@@ -39,7 +39,7 @@ pip install gridpoints[demo]    # for the demonstration notebook.
 
 ### Quickstart
 
-Full Demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/main/notebook.ipynb)
+Full Demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/main/notebook.ipynb))
 
 ```python
 import gridpoints as grid
