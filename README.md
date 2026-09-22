@@ -15,7 +15,7 @@ z[i, j, k+1] >= z[i, j, k]
 ```
 → On the `Pgrid` view of `P`, neighbor queries become a simple stencil look-up :
 ```text
-neighborhood[i, j, k] = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
+neighborhood(Pgrid[i, j, k]) = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
 ````
 where `R` is a radius cutoff to determine, allowing local operations in linear time.  
 → Geometric operations (convolution, clustering, interpolation …) can then be applied directly on the `Pgrid` view instead of relying on complex graph or point-cloud methods.
