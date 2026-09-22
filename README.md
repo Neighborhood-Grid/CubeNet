@@ -18,8 +18,7 @@ z[i, j, k+1] >= z[i, j, k]
 neighborhood[i, j, k] = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
 ````
 where `R` is a radius cutoff to determine, allowing local operations in linear time.  
-→ Standard operations (convolution, clustering, interpolation …) can then be applied directly on the `Pgrid` view instead of relying on complex graph convolutions  
-or other point-cloud techniques.
+→ Standard operations (convolution, clustering, interpolation …) can then be applied directly on the `Pgrid` view instead of relying on complex graph or point-cloud methods.
 
 `P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D). To allow natural padding when the grid has more cells than they are points in the cloud, NaNs and Infs are supported in a consistent manner: 
 - nans → random position
@@ -35,10 +34,12 @@ Expected runtime for sorting 1 million points: CPU → < 10s (numpy), GPU → < 
 
 ```bash
 pip install gridpoints          # core only
-pip install gridpoints[demo]    # for the demonstration notebook, see `notebook.ipynb`
+pip install gridpoints[demo]    # for the demonstration notebook.
 ```
 
 ### Quickstart
+
+Full Demo: [notebook.ipynb](https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/notebook.ipynb)
 
 ```python
 import gridpoints as grid
