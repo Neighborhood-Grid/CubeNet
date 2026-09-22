@@ -7,8 +7,7 @@ n <-> [i,j,…](n).
 ```
 It replaces and enhances the [squarenet](https://raw.githubusercontent.com/Neighborhood-Grid/SquareNet/main/README.md) project with a more powerfull sorting algorithm.
 
-What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) 
-is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
+What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
 ```text
 x[i+1, j, k] >= x[i, j, k]
 y[i, j+1, k] >= y[i, j, k]
@@ -19,13 +18,10 @@ z[i, j, k+1] >= z[i, j, k]
 neighborhood[i, j, k] = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
 ````
 where `R` is a radius cutoff to determine, allowing local operations in linear time.  
-→ Standard operations (convolution, clustering, interpolation …) can then be applied  
-directly on the `Pgrid` view instead of relying on complex graph convolutions  
+→ Standard operations (convolution, clustering, interpolation …) can then be applied directly on the `Pgrid` view instead of relying on complex graph convolutions  
 or other point-cloud techniques.
 
-`P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D).  
-To allow natural padding when the grid has more cells than points,  
-NaNs and Infs are supported in a consistent manner: 
+`P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D). To allow natural padding when the grid has more cells than they are points in the cloud, NaNs and Infs are supported in a consistent manner: 
 - nans → random position
 - (+-) infs → border of the grid
   
