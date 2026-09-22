@@ -36,10 +36,9 @@ Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms
 pip install gridpoints          # core only
 pip install gridpoints[demo]    # for the demonstration notebook.
 ```
+Full Demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
 
 ### Quickstart
-
-Full Demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
 
 ```python
 import gridpoints as grid
