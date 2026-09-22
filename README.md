@@ -24,7 +24,7 @@ where `R` is a radius cutoff to determine, allowing local operations in linear t
 - nans → random position
 - (+-) infs → border of the grid
   
-This allow to gridsort prime or variable number of points N, as long as one is ready to deal with void/special grid cells.
+This allow to gridsort prime or variable number of points, as long as one is ready to deal with void/special grid cells.
 
 Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms (torch cuda)
 
