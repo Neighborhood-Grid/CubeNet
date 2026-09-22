@@ -7,7 +7,7 @@ n <-> [i,j,…](n).
 ```
 It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more powerfull points sorting algorithm.
 
-What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
+What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that `Pgrid(I, J, K, D)` = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
 ```text
 x[i+1, j, k] >= x[i, j, k]
 y[i, j+1, k] >= y[i, j, k]
