@@ -5,7 +5,7 @@ One point, one cell,
 ```text
 n <-> [i,j,…](n).
 ```
-It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more powerfull sorting algorithm.
+It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more powerfull points sorting algorithm.
 
 What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
 ```text
