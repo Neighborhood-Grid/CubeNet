@@ -1,7 +1,11 @@
 ## ❒ Gridpoints — Multi dimensional sort for point clouds
 
 `Gridpoints` maps raw indexes of unstructured **point clouds** to structured grids multi-index  through a **bijective transformation**: 
-One point, one cell, `n <-> [i,j,…](n)`. It replaces and enhances the squarenet project with a more powerfull sorting algorithm.
+One point, one cell, 
+```text
+`n <-> [i,j,…](n)`.
+```
+It replaces and enhances the squarenet project with a more powerfull sorting algorithm.
 
 What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that Pgrid = P[order].reshape(*gridshape, D) 
 is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
