@@ -3,7 +3,7 @@
 `Gridpoints` maps raw indexes of unstructured **point clouds** to structured grids multi-index  through a **bijective transformation**: 
 One point, one cell, 
 ```text
-`n <-> [i,j,…](n)`.
+n <-> [i,j,…](n).
 ```
 It replaces and enhances the squarenet project with a more powerfull sorting algorithm.
 
