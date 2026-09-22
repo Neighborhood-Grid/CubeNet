@@ -78,4 +78,4 @@ The typical use-case of `Gridpoints` is to allow fast local operations on arbitr
 ```text
 output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )
 ```
-To go beyond standard (slow) python loops, this can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non linear grid kernels.
+To go beyond standard (slow) python loops, this can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non linear grid kernels. On GPU, tiling the grid and leveraging a custom `triton` kernel might be particularly efficient.
