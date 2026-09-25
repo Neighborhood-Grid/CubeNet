@@ -30,10 +30,8 @@ Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms
 
 `When not to use gridpoints ?`
 - high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
-- weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`) ... but with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry [^1].
+- weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`) ... but with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
 - small point clouds: beyond a few hundred points, local operations in linear time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
-
-[^1]: The eggshell exemple illustrates the importance of selecting a suitable gridshape, which itself can be challenging, if the point clouds is assumed to live on a thin surface instead of filling a full volumetric domain.
 
 ---
 
@@ -72,11 +70,19 @@ C = Cflat[orderinv]   # matches the initial points order
 
 ---
 
+### Note on rectangular gridshapes
+
+The eggshell example illustrates the importance of selecting a suitable grid-shape decomposition. This can itself be challenging when the point cloud is assumed to follow a complex topological pattern, such as a thin surface rather than a full volumetric domain. While the precise decomposition is not particularly important (e.g. (18,20,16) vs. (16,15,24) will generally make little difference), the orders of magnitude of the different dimensions do matter and should be tuned to the dataset: (18,20,16) and (36,40,4) can lead to substantially different results. As mentioned, nan/inf padding can help accomodate integer-factorization constraints
+
+Another possibility for smoothing out topology-specific effects is to perform the sort after randomly projecting the dataset onto a lower-dimensional subspace. Random projections are known to approximately preserve pairwise distances, as formalized by the Johnson–Lindenstrauss lemma.
+
+
 ### Note on the cutoff radius R
 
 There is no strict theoretical guarantee about what the cutof radius R should be for a given task. E.g the relative grid position between a point and its nearest neighbors can't be garanted to be in the exact adjacent grid cells. What is guaranteed from the sorted ordering is only **grid monotonicity**: *x* coordinates increase along rows, *y* coordinates along columns, and so on.
 
 As an example, empirical results in 2-D show that `R = 5` is enough for ~99 % of the nearest neighbors; some outlier neighbors will sit further apart for complex geometries with pronounced peaks, holes or any non-smoothness. When a stricter neighborhood is required, or in high dimensional setting, the solution might be to build an assembly of grid experts, each working on a rotated / projected view of the points, as discussed in [this topic](https://github.com/glotzerlab/freud/discussions/1417). An other possibility would be to tile the grid: each tile is enhanced with location metadata (e.g. a bounding box), allowing for pruning pairs of tiles with a distance certified to be far enough for a given criterion.
+
 
 ### Note on efficient stencil operations
 
