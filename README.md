@@ -30,7 +30,7 @@ Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms
 
 `When not to use gridpoints ?`
 - high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
-- weird geometries. Supported shapes goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell with a 2d grid shape... but with some limits. Bad fits: same eggshell with a 3d grid shape, a leafless tree, a wind turbine... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
+- weird geometries. Supported shapes goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (if a rectangular shape is specified to `gridpoints.sort()` eg gridshape = (128,128,2)) ... but with some limits. Bad fits: a leafless tree, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry. The eggshell exemple illustrates the importance of selecting a suitable gridshape, which itself can be challenging, if the point clouds is assumed to live on a thin surface instead of filling a full volumetric domain.
 - small point clouds: beyond a few hundred points, local operations in linear time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
 
 ---
