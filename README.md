@@ -13,6 +13,9 @@ x[i+1, j, k] >= x[i, j, k]
 y[i, j+1, k] >= y[i, j, k]
 z[i, j, k+1] >= z[i, j, k]
 ```
+
+<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
+
 → On the `Pgrid` view of `P`, neighbor queries become a simple stencil look-up :
 ```text
 neighborhood(Pgrid[i, j, k]) = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
@@ -30,7 +33,7 @@ Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms
 
 `When not to use gridpoints ?`
 - high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
-- weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`) ... but with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
+- weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`). You can see various exemples in the [plot](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots) folder But with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
 - small point clouds: beyond a few hundred points, local operations in linear time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
 
 ---
@@ -65,8 +68,6 @@ Cflat = Cgrid.reshape(-1, 3)
 orderinv = grid.invert_permutation(order)
 C = Cflat[orderinv]   # matches the initial points order
 ```
-
-<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
 ---
 
