@@ -5,7 +5,9 @@ One point, one cell,
 ```text
 n <-> [i,j,…](n).
 ```
-It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more powerfull points sorting algorithm.
+It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more efficient points sorting algorithm.
+
+<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
 What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that `Pgrid(I, J, …, D)` = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
 ```text
@@ -13,8 +15,6 @@ x[i+1, j, k] >= x[i, j, k]
 y[i, j+1, k] >= y[i, j, k]
 z[i, j, k+1] >= z[i, j, k]
 ```
-
-<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
 → On the `Pgrid` view of `P`, neighbor queries become a simple stencil look-up :
 ```text
