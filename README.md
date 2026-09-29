@@ -5,7 +5,8 @@ One point, one cell,
 ```text
 n <-> [i,j,…](n).
 ```
-It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more efficient points sorting algorithm.
+It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more robust points sorting algorithm. The goal is 
+to build a spatialy coherent multi index to later store and query the point cloud efficiently, based on adaptative axes (lines, columns, and more in 3D+) as showed on following exemple :
 
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
