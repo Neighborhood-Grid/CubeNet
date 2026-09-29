@@ -65,7 +65,7 @@ Bgrid = Bflat.reshape(100, 100, 100, 3)
 Cgrid = apply_something(Bgrid)
 
 # Back to the original points indexing
-Cflat = Cgrid.reshape(-1, 3)
+Cflat = Cgrid.reshape(1_000_000, *)
 orderinv = grid.invert_permutation(order)
 C = Cflat[orderinv]   # matches the initial points order
 ```
