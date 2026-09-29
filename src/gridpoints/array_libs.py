@@ -46,7 +46,7 @@ def inplace_sort(X, axis):
     xp, backend_name = get_backend(X)
     if backend_name == 'torch':
         X.copy_(X.sort(dim=axis)[0])
-    if backend_name == "cupy":
+    elif backend_name == "cupy":
         X[...] = xp.sort(xp.ascontiguousarray(X), axis=axis)
     else:
         X.sort(axis=axis)
@@ -75,15 +75,17 @@ def argmax(arr, axis):
         return arr.argmax(dim=axis)
     return arr.argmax(axis=axis)
 
-def random_noise(shape, reference_array):
+def random_noise(shape, reference_array, eps = None):
+    if eps is None:
+        eps = EPS
     xp, backend_name = get_backend(reference_array)
     if backend_name == 'torch':
-        return EPS * xp.rand(*shape, device=reference_array.device)
+        return eps * xp.rand(*shape, device=reference_array.device)
     elif backend_name == 'cupy':
-        return EPS * xp.random.rand(*shape)
+        return eps * xp.random.rand(*shape)
     else:
         rng = xp.random.default_rng(42)
-        return EPS * rng.random(shape)
+        return eps * rng.random(shape)
 
 def copy(arr):
     _, backend_name = get_backend(arr)
@@ -91,9 +93,15 @@ def copy(arr):
         return arr.clone()
     return arr.copy()
 
-def nan_to_num(arr):
+def nan_infs_to_num_and_tiebreaker(arr, safe = False):
     xp, backend = get_backend(arr)
     out = copy(arr)
+    eps = EPS
+    if safe: #better precision when adding epsilon noise tiebreaker 
+        #and latter when applying diagonal rotations.
+        #probably unnecessary (default safe = False)
+        out = astype(out, "float64") 
+        eps = 10**(-10)
 
     for d in range(arr.shape[1]):
         x = arr[:, d]
@@ -110,7 +118,7 @@ def nan_to_num(arr):
                    if backend == 'torch' else xp.random.randint(len(vals), size=n))
             out[nan, d] = vals[idx]
 
-    return out + random_noise(out.shape, out)
+    return out + random_noise(out.shape, out, eps = eps)
 
 def all_true(tensor):
     _, backend_name = get_backend(tensor)

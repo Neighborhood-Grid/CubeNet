@@ -8,7 +8,7 @@ import math
 import warnings
 from .array_libs import (
     arange, get_backend, all_true, 
-    inplace_sort, empty, astype, nan_to_num, 
+    inplace_sort, empty, astype, nan_infs_to_num_and_tiebreaker, 
     random_permutation, argmax, copy, flip
 )
 from .diagonal_tricks import sort_diag_trick, sort_tridiag_trick
@@ -52,22 +52,35 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         monotonically sorted grid.
     """
     N, D = X.shape
-    assert math.prod(gridshape) == N
-    assert len(gridshape) == D
-    
+    assert len(gridshape) == D, (
+        f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: "
+        "gridshape needs exactly one specified shape per axis. "
+        "For example, with 3D points, (32, 32) is invalid (z shape is missing), "
+        "while (32, 32, 1) is valid (z size is 1)."
+    )
+    assert math.prod(gridshape) == N, (
+        f"a grid with given gridshape ={gridshape} contains {math.prod(gridshape)} cells "
+        f"but there are N={N} points. "
+        "If there are fewer points than cells, pad the points with "
+        "dummy points (e.g. NaN/inf). "
+        "If there are more points than cells, use a bigger gridshape."
+    )
     level = min(level, X.shape[-1])
+
+    if verbose >=1:
+        print(f"[gridsort] initialisation: {init}", end = "")
     if init == "kdtree":
-            if verbose >=1:
-                print("performing kdtree initialisation")
             order = kdtree_order(X, gridshape)
-            if verbose >=1:
-                print("done")
             if level == 1:
                 return order
     else:
         order = arange(len(X), 'int', reference_array=X)
     if init == "shuffle":
         order = random_permutation(order)
+
+    if verbose >=1:
+        print("done")
+    
 
     ordernew, converged = _mlg_step(X[order], gridshape, level=level, n_iter=n_iter, verbose = verbose)
     order = order[ordernew]
@@ -84,7 +97,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
             f"Algorithm failed to converge after {n_iter} iterations.\n " \
             "Consider checking if the grid structure is already suitable \n" \
             "for the given task, which is higly probable, or increase the \n" \
-            "`n_iter` parameter if strict convergence is required.\n",
+            "`n_iter` parameter if strict convergence is required.\n" \
             "(to shutup this warning, run the sort with verbose <= 1)",
             category=ConvergenceWarning,
             stacklevel=2
@@ -111,7 +124,7 @@ def sort(X, gridshape, verbose = 2, level=2, init="kdtree", inplace=False, n_ite
         rather than pushed to grid boundaries.
     verbose : int, default 2
         0 = silent, 1 = log progress, 2 = 1 + warn if convergence failed
-    level : {1, 2, 3}, default=1
+    level : {1, 2, 3}, default=2
         Maximum order of lattice directions considered. Higher values improve 
         grid quality at the expense of computational speed. Note that `level=3` 
         is only supported if D >= 3.
@@ -251,14 +264,15 @@ def _sort_loop(loop, directions, shape, n_iter, verbose):
         if fully_sorted:
             break
 
-    print("it:", it)
+    if verbose:
+        print("\n it:", it, "converged:", fully_sorted)
     return (cycle_to_idx[grid]).ravel(), fully_sorted
 
 def _mlg_step(X, shape, level, n_iter, verbose):
     xp, _ = get_backend(X)     
     directions_raw = xp.vstack(_direction_blocks(level=level, xp=xp, dim=X.shape[-1]))
     directions = astype(directions_raw, 'float', reference_array=X)
-    X_float = nan_to_num(astype(X, 'float'))
+    X_float = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     
     loop = _build_monotonic_lagrangian_loop(X_float, directions)
     if verbose >=1:

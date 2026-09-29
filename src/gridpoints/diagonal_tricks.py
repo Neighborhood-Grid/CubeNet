@@ -20,14 +20,16 @@ def sort_diag_trick(X):
     rotate back the diagonals
     """
     xp, _ = get_backend(X)
-    bigM = (X.max() - X.min()) + 1#bigM for safety, protect
+    #bigM for safety, protect
     #overlapping diagonals
+    bigM = (X.max() - X.min()) + 1
 
     n, m = X.shape[-2:]
-    
-    if m > n: #Optional, maximal parallelisation
+
+    #move the smallest axis to last position
+    if m > n: 
         X = xp.moveaxis(X, [-1, -2], [-2, -1]) 
-        n, m = m, n
+        n, m = m, n #now n >= m
         
     i = arange(n, 'int', X)[:, None]
     j = arange(m, 'int', X)[None, :]
@@ -56,20 +58,16 @@ def sort_tridiag_trick(X):
     and rotate back the tridiagonals
     """
     xp, _ = get_backend(X)
-    bigM = (X.max() - X.min()) + 1#bigM for safety, protect
+    #bigM for safety, protect
     #overlapping diagonals
+    bigM = (X.max() - X.min()) + 1
 
-    a, b, c = X.shape[-3:]
-
-    #Optional, maximal parallelisation:
-    #move the smallest axis to last position
-    #before the tridiagonal rotation
-    if (a < b) and (a < c):
-        X = xp.moveaxis(X, [-3, -1], [-1, -3]) 
-        a, c = c, a
-    elif b < c:
-        X = xp.moveaxis(X, [-2, -1], [-1, -2]) 
-        b, c = c, b
+    #move the smallest axes to last positions
+    abc = X.shape
+    dst_axes = (-3, -2, -1)
+    src_axes = tuple(sorted(dst_axes, key=lambda ax: -abc[ax]))
+    X = xp.moveaxis(X, src_axes, dst_axes)   
+    a, b, c = X.shape[-3:]  # now a >= b >= c 
     
     i = arange(a, 'int', X)[:, None, None]
     j = arange(b, 'int', X)[None, :, None]
@@ -81,7 +79,7 @@ def sort_tridiag_trick(X):
     dj_ = dj % b
     dires = di // a         
     djres = dj // b
-    groupkey = bigM * (dires * (2 * (b + c)) + djres)
+    groupkey = bigM * (dires * 4 + djres)
     
     X[..., di_, dj_, k] = X[..., i, j, k] - groupkey #Trirotation
     # ========================
