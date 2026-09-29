@@ -58,11 +58,11 @@ A = np.random.rand(1_000_000, 3)
 
 # Sorted view: place the points inside the grid
 order = grid.argsort(A, gridshape=(100, 100, 100))
-Bflat = A[order]
-Bgrid = Bflat.reshape(100, 100, 100, 3)
+Bflat = A[order] #still  flat but sorted
+Bgrid = Bflat.reshape(100, 100, 100, 3) #reshaped as a grid 
 
 # Rest of your pipeline, working with grids
-Cgrid = apply_something(Bgrid)
+Cgrid = apply_something(Bgrid) #(100, 100, 100, *)
 
 # Back to the original points indexing
 Cflat = Cgrid.reshape(1_000_000, *)
