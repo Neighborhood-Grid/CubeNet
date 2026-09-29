@@ -58,7 +58,7 @@ A = np.random.rand(1_000_000, 3)
 
 # Sorted view: place the points inside the grid
 order = grid.argsort(A, gridshape=(100, 100, 100))
-Bflat = A[order] #still  flat but sorted
+Bflat = A[order] #flat but sorted with a grid layout (C-order)
 Bgrid = Bflat.reshape(100, 100, 100, 3) #reshaped as a grid 
 
 # Rest of your pipeline, working with grids
