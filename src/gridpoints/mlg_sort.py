@@ -51,6 +51,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         Permutation indices such that `X[order].reshape(*shape, D)` forms a 
         monotonically sorted grid.
     """
+    X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     N, D = X.shape
     assert len(gridshape) == D, (
         f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: "
@@ -272,9 +273,8 @@ def _mlg_step(X, shape, level, n_iter, verbose):
     xp, _ = get_backend(X)     
     directions_raw = xp.vstack(_direction_blocks(level=level, xp=xp, dim=X.shape[-1]))
     directions = astype(directions_raw, 'float', reference_array=X)
-    X_float = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     
-    loop = _build_monotonic_lagrangian_loop(X_float, directions)
+    loop = _build_monotonic_lagrangian_loop(X, directions)
     if verbose >=1:
         print(f"level [{level}]. sorting")
     return _sort_loop(loop, directions, shape, n_iter, verbose)
