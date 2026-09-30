@@ -51,7 +51,6 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         Permutation indices such that `X[order].reshape(*gridshape, D)` forms a 
         monotonically sorted grid.
     """
-    X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     N, D = X.shape
     assert init in ["kdtree", "shuffle", None],(
         "Initialisation method must be kdtree, shuffle or None \n"
@@ -77,9 +76,11 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
     def log(*args, **kwargs):
         if verbose >= 1:
             print(*args, **kwargs)
-    
+
+    X, gridshape, D = _squeeze(X, gridshape, D)
     level = min(level, X.shape[-1])
     n_iter = max(1, n_iter)
+    X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
 
     log(f"[gridsort] initialisation: {init}", end = "")
     if init == "kdtree":
@@ -187,6 +188,20 @@ def invert_permutation(sigma):
 class ConvergenceWarning(UserWarning):
     """Warning for convergence issues."""
     pass
+
+def _squeeze(X, gridshape, D):
+    not_to_squeeze = [
+        axis for axis in range(D)
+        if gridshape[axis] not in (1, None)
+    ]
+
+    gridshape = [gridshape[axis] for axis in not_to_squeeze]
+    X = X[:, not_to_squeeze]
+
+    D = len(not_to_squeeze)
+
+    return X, gridshape, D
+
 
 def _canonical_directions(directions):
     first_nz = argmax(directions != 0, axis=1)
