@@ -10,7 +10,6 @@ from .array_libs import (
     arange, get_backend, all_true, 
     inplace_sort, empty, astype, nan_infs_to_num_and_tiebreaker, 
     random_permutation, argmax, copy_value, flip, 
-    int64_promotion,
 )
 from .diagonal_tricks import sort_diag_trick, sort_tridiag_trick
 from .kdtree import kdtree_order
@@ -55,36 +54,32 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
     X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     N, D = X.shape
     assert init in ["kdtree", "shuffle", None],(
-        "Initialisation method must be kdtree, shuffle or None "
+        "Initialisation method must be kdtree, shuffle or None \n"
         f"asked init = {init} is invalid."   
     )
     assert level in [1, 2, 3], (
         f"Sorting level must be in (1,2,3), asked level = {level} is invalid."
     )
     assert len(gridshape) == D, (
-        f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: "
-        "gridshape needs exactly one specified shape per axis. "
-        "For example, with 3D points, (32, 32) is invalid (z shape is missing), "
+        f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: \n"
+        "gridshape needs exactly one specified shape per axis. \n"
+        "For example, with 3D points, (32, 32) is invalid (z shape is missing), \n"
         "while (32, 32, 1) is valid (z shape is 1)."
     )
     assert math.prod(gridshape) == N, (
-        f"a grid with given gridshape ={gridshape} contains {math.prod(gridshape)} cells "
-        f"but there are N={N} points. "
-        "If there are fewer points than cells, pad the points with "
-        "dummy points (e.g. NaN/inf). "
-        "If there are more points than cells, use a bigger gridshape."
+        f"a grid with given gridshape ={gridshape} contains {math.prod(gridshape)} cells \n"
+        f"but there are N={N} points. \n"
+        "If there are fewer points than cells, pad the points with \n"
+        "dummy points (e.g. NaN/inf). \n"
+        "If there are more points than cells, use a bigger gridshape.\n"
     )
-
-    # if N is too large for current default dtype,
-    # the internal default dtype of the array_lib 
-    # is promoted for safely indexing bilion points
-    int64_promotion(N=N) 
 
     def log(*args, **kwargs):
         if verbose >= 1:
             print(*args, **kwargs)
     
     level = min(level, X.shape[-1])
+    n_iter = max(1, n_iter)
 
     log(f"[gridsort] initialisation: {init}", end = "")
     if init == "kdtree":
@@ -92,14 +87,13 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
             if level == 1:
                 log("it:", {0}, "converged:",  True)
                 log("done")
-                int64_promotion(back = True)
                 return order
     else:
         order = arange(len(X), X)
     if init == "shuffle":
         order = random_permutation(order)
 
-    log("done")
+    log("\n done")
     
 
     ordernew, converged = _mlg_step(X[order], gridshape, level=level, n_iter=n_iter, verbose = verbose)
@@ -114,7 +108,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
             order = order[ordernew]
     if not converged and verbose >=2:
         warnings.warn(
-            f"Algorithm failed to converge after {n_iter} iterations.\n " \
+            f"\n Algorithm failed to converge after {n_iter} iterations.\n " \
             "Consider checking if the grid structure is already suitable \n" \
             "for the given task, which is higly probable, or increase the \n" \
             "`n_iter` parameter if strict convergence is required.\n" \
@@ -124,7 +118,6 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         )
 
     log("done")
-    int64_promotion(back = True)
     return order
 
 
@@ -166,6 +159,13 @@ def sort(X, gridshape, verbose = 2, level=2, init="kdtree", inplace=False, n_ite
     order = argsort(X, gridshape, verbose = verbose, level=level, init = init, n_iter=n_iter)
 
     if inplace:
+        _, backend_name = get_backend(X)
+        if backend_name == 'torch':
+            assert not X.require_grad(), (
+                "inplace sorting an array with require grad is not safe \n"
+                "use Y = grid.sort(X, inplace = False) which will properly \n"
+                "propagate the gradient of X to Y"
+            )
         X[:] = X[order]
         return None
         

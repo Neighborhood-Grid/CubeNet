@@ -22,8 +22,8 @@ z[i, j, k+1] >= z[i, j, k]
 ```text
 neighborhood(Pgrid[i, j, k]) = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
 ````
-where `R` is a radius cutoff to determine, allowing local operations in linear time.  
-→ Geometric operations (convolution, clustering, interpolation …) can then be applied **in linear time** directly on the `Pgrid` view instead of relying on complex graph or point-cloud methods
+where `R` is a radius cutoff to determine, allowing local operations in O(N) time.  
+→ Geometric operations (convolution, clustering, interpolation …) can then be applied **in O(N) time** directly on the `Pgrid` view instead of relying on complex graph or point-cloud methods
 
 `P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D). To allow natural padding when the grid has more cells than they are points in the cloud, NaNs and Infs are supported in a consistent manner: 
 - nans → random position
@@ -36,7 +36,7 @@ Expected runtime for sorting 1 million points: CPU: < 10s (numpy), GPU: < 500 ms
 `When not to use gridpoints ?`
 - high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
 - weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`). You can see various exemples in the [plot](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots) folder But with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
-- small point clouds: beyond a few hundred points, local operations in linear time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
+- small point clouds: beyond a few hundred points, local operations in O(N) time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
 
 ---
 
@@ -94,4 +94,4 @@ The typical use-case of `Gridpoints` is to allow fast local operations on arbitr
 ```text
 output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )
 ```
-To go beyond standard (slow) python loops, this kind of kernel computation can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non linear grid kernels. On GPU, tiling the grid and leveraging a custom `triton` kernel might be particularly efficient.
+To go beyond standard (slow) python loops, this kind of kernel computation can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non O(N) grid kernels. On GPU, tiling the grid and leveraging a custom `triton` kernel might be particularly efficient.

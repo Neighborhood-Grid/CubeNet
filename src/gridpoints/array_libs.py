@@ -11,24 +11,12 @@ like arange, copy, shuffle etc.
 # distingishible to avoid sorting inconsistencies
 # for very close points
 _FLOAT = 'float64'
-#automatically promoted for big number 
-# of points (>= 300 millions) to avoid 
-# overflows in diagonal tricks operations
-_INT = 'int32'
-_TEMP_INT = None
-
+# might be downgraded to 'int32' for < 300 million 
+# points point cloud
+_INT = 'int64'
 
 #tie breaker for very close points
 EPS = 10**(-5) if (_FLOAT == 'float32') else 10**(-10)
-
-def int64_promotion(N = 0, back=False):
-    global _INT, _TEMP_INT
-    if back:
-        _INT = _TEMP_INT
-        _TEMP_INT = None
-    elif N >= 3e8:
-        _TEMP_INT = _INT
-        _INT = 'int64'
 
 
 def get_dtype(dtp, xp):
@@ -77,7 +65,6 @@ def empty(shape, dtype_str, reference_array):
         return xp.empty(shape, dtype=dtype, device=reference_array.device)
     return xp.empty(shape, dtype=dtype)
 
-
 def arange(N, reference_array):
     xp, backend_name = get_backend(reference_array)
     dtype = get_dtype(_INT, xp)
@@ -111,20 +98,20 @@ def copy_value(arr):
         return arr.detach().clone()
     return arr.copy()
 
-def nan_infs_to_num_and_tiebreaker(arr, safe = False):
+def nan_infs_to_num_and_tiebreaker(arr):
     xp, backend = get_backend(arr)
     out = copy_value(arr)
-    eps = EPS
-    if safe: #better precision when adding epsilon noise tiebreaker 
-        #and latter when applying diagonal rotations.
-        #probably unnecessary (default safe = False)
-        out = astype(out, "float64") 
-        eps = 10**(-10)
 
     for d in range(arr.shape[1]):
         x = arr[:, d]
         finite = xp.isfinite(x)
         vals = x[finite]
+
+        if not (
+            finite.any().item() if backend == 'torch' else bool(finite.any())
+        ):
+            vals = xp.zeros_like(x)
+        
 
         out[xp.isposinf(x), d] = vals.max() + 1
         out[xp.isneginf(x), d] = vals.min() - 1
@@ -136,7 +123,7 @@ def nan_infs_to_num_and_tiebreaker(arr, safe = False):
                    if backend == 'torch' else xp.random.randint(len(vals), size=n))
             out[nan, d] = vals[idx]
 
-    return out + random_noise(out.shape, out, eps = eps)
+    return out + random_noise(out.shape, out)
 
 def all_true(tensor):
     _, backend_name = get_backend(tensor)
