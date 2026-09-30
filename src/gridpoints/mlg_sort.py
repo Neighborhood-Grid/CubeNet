@@ -53,6 +53,13 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
     """
     X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
     N, D = X.shape
+    assert init in ["kdtree", "shuffle", None],(
+        "Initialisation method must be kdtree, shuffle or None "
+        f"given init {init} is invalid."   
+    )
+    assert level in [1, 2, 3], (
+        f"Sorting level must be in (1,2,3), asked level {level} is invalid."
+    )
     assert len(gridshape) == D, (
         f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: "
         "gridshape needs exactly one specified shape per axis. "
