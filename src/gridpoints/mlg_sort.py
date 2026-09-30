@@ -9,7 +9,8 @@ import warnings
 from .array_libs import (
     arange, get_backend, all_true, 
     inplace_sort, empty, astype, nan_infs_to_num_and_tiebreaker, 
-    random_permutation, argmax, copy, flip
+    random_permutation, argmax, copy_value, flip, 
+    int64_promotion,
 )
 from .diagonal_tricks import sort_diag_trick, sort_tridiag_trick
 from .kdtree import kdtree_order
@@ -28,7 +29,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
     gridshape : tuple of int
         Target shape of the sorting grid. The product of the dimensions must 
         equal N and its length must equal D. E.g., for X of shape (42, 2), 
-        `shape` can be (6, 7); for (60, 3), `shape` can be (3, 4, 5).
+        `gridshape` can be (6, 7); for (60, 3), `gridshape` can be (3, 4, 5).
 
         Note: Point clouds can be padded with +/- infinity placeholders to reach 
         a valid grid size. NaNs can also be used, but will be placed randomly 
@@ -48,7 +49,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
     Returns
     -------
     order : ndarray of shape (N,)
-        Permutation indices such that `X[order].reshape(*shape, D)` forms a 
+        Permutation indices such that `X[order].reshape(*gridshape, D)` forms a 
         monotonically sorted grid.
     """
     X = nan_infs_to_num_and_tiebreaker(astype(X, 'float'))
@@ -73,21 +74,32 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         "dummy points (e.g. NaN/inf). "
         "If there are more points than cells, use a bigger gridshape."
     )
+
+    # if N is too large for current default dtype,
+    # the internal default dtype of the array_lib 
+    # is promoted for safely indexing bilion points
+    int64_promotion(N=N) 
+
+    def log(*args, **kwargs):
+        if verbose >= 1:
+            print(*args, **kwargs)
+    
     level = min(level, X.shape[-1])
 
-    if verbose >=1:
-        print(f"[gridsort] initialisation: {init}", end = "")
+    log(f"[gridsort] initialisation: {init}", end = "")
     if init == "kdtree":
             order = kdtree_order(X, gridshape)
             if level == 1:
+                log("it:", {0}, "converged:",  True)
+                log("done")
+                int64_promotion(back = True)
                 return order
     else:
-        order = arange(len(X), 'int', reference_array=X)
+        order = arange(len(X), X)
     if init == "shuffle":
         order = random_permutation(order)
 
-    if verbose >=1:
-        print("done")
+    log("done")
     
 
     ordernew, converged = _mlg_step(X[order], gridshape, level=level, n_iter=n_iter, verbose = verbose)
@@ -110,8 +122,9 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
             category=ConvergenceWarning,
             stacklevel=2
         )
-    if verbose:
-        print("done")
+
+    log("done")
+    int64_promotion(back = True)
     return order
 
 
@@ -125,7 +138,7 @@ def sort(X, gridshape, verbose = 2, level=2, init="kdtree", inplace=False, n_ite
     gridshape : tuple of int
         Target shape of the sorting grid. The product of the dimensions must 
         equal N and its length must equal D. E.g., for X of shape (42, 2), 
-        `shape` can be (6, 7); for (60, 3), `shape` can be (3, 4, 5).
+        `gridshape` can be (6, 7); for (60, 3), `gridshape` can be (3, 4, 5).
 
         Note: Point clouds can be padded with +/- infinity placeholders to reach 
         a valid grid size. NaNs can also be used, but will be placed randomly 
@@ -147,7 +160,7 @@ def sort(X, gridshape, verbose = 2, level=2, init="kdtree", inplace=False, n_ite
     Returns
     -------
     X_sorted : ndarray of shape (N, D) or None
-        The sorted point cloud such that `X_sorted.reshape(*shape, D)` forms a 
+        The sorted point cloud such that `X_sorted.reshape(*gridshape, D)` forms a 
         monotonically sorted grid. Returns `None` if `inplace=True`.
     """
     order = argsort(X, gridshape, verbose = verbose, level=level, init = init, n_iter=n_iter)
@@ -162,8 +175,10 @@ def invert_permutation(sigma):
     """
     invert permutation helper, sigma_inv[sigma] = identity
     """
-    xp, _ = get_backend(sigma)
-    return xp.argsort(sigma)
+    identity = arange(len(sigma), sigma)
+    inv = empty(len(sigma), sigma)
+    inv[sigma]  = identity
+    return inv
 
 # ============================================
 #                   Helpers
@@ -175,13 +190,15 @@ class ConvergenceWarning(UserWarning):
 
 def _canonical_directions(directions):
     first_nz = argmax(directions != 0, axis=1)
-    idx = arange(len(directions), 'int', reference_array=directions)
+    idx = arange(len(directions), directions)
     first_nz_sign = directions[idx, first_nz]
     return directions[first_nz_sign > 0]
 
 
-def _direction_blocks(level, xp, dim=3):
-    offsets = xp.arange(-1, 2)
+def _direction_blocks(level, X):
+    xp, _ = get_backend(X)
+    dim = X.shape[-1]
+    offsets = arange(3, X) - 1
     lattice = xp.stack(xp.meshgrid(*(offsets,) * dim, indexing="ij"), axis=-1).reshape(-1, dim)
     sq_norms = xp.sum(lattice ** 2, axis=-1)
     dirs = _canonical_directions(lattice[(sq_norms > 0) & (sq_norms <= level ** 2)])
@@ -236,9 +253,9 @@ def _build_monotonic_lagrangian_loop(X, directions):
     rank = empty((K, N), 'int', reference_array=X)
     for k in range(K):
         order = xp.argsort(projections[:, k])
-        rank[k, order] = arange(N, 'int', reference_array=X)
+        rank[k, order] = arange(N, X)
 
-    identity = arange(N, 'int', reference_array=X)
+    identity = arange(N, X)
     h = [identity] + [rank[k] for k in range(K)]
     h_next = [rank[k] for k in range(K)] + [identity]
 
@@ -248,7 +265,7 @@ def _build_monotonic_lagrangian_loop(X, directions):
         sigma[hk] = hk_next
         perms.append(sigma)
 
-    init_perm, end_perm = copy(perms[0]), copy(perms[-1])
+    init_perm, end_perm = copy_value(perms[0]), copy_value(perms[-1])
     cycle_perms = perms[:-1]
     cycle_perms[0] = init_perm[end_perm]
 
@@ -278,7 +295,7 @@ def _sort_loop(loop, directions, shape, n_iter, verbose):
 
 def _mlg_step(X, shape, level, n_iter, verbose):
     xp, _ = get_backend(X)     
-    directions_raw = xp.vstack(_direction_blocks(level=level, xp=xp, dim=X.shape[-1]))
+    directions_raw = xp.vstack(_direction_blocks(level, X))
     directions = astype(directions_raw, 'float', reference_array=X)
     
     loop = _build_monotonic_lagrangian_loop(X, directions)

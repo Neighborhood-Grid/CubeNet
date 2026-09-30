@@ -31,8 +31,8 @@ def sort_diag_trick(X):
         X = xp.moveaxis(X, [-1, -2], [-2, -1]) 
         n, m = m, n #now n >= m
         
-    i = arange(n, 'int', X)[:, None]
-    j = arange(m, 'int', X)[None, :]
+    i = arange(n, X)[:, None]
+    j = arange(m, X)[None, :]
     
     di = (i - j)
     i_ = di % n
@@ -69,9 +69,9 @@ def sort_tridiag_trick(X):
     X = xp.moveaxis(X, src_axes, dst_axes)   
     a, b, c = X.shape[-3:]  # now a >= b >= c 
     
-    i = arange(a, 'int', X)[:, None, None]
-    j = arange(b, 'int', X)[None, :, None]
-    k = arange(c, 'int', X)[None, None, :]
+    i = arange(a, X)[:, None, None]
+    j = arange(b, X)[None, :, None]
+    k = arange(c, X)[None, None, :]
     
     di = i - k
     dj = j - k

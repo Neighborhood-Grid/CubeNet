@@ -39,7 +39,7 @@ def kdtree_order_dyadic(X):
     M = int(N**(1/D) + 0.1)
     K = int(math.log2(M))
     
-    idx = arange(N, 'int', reference_array=X)
+    idx = arange(N, X)
     
     for step in range(K * D):
         axis = step % D
@@ -103,8 +103,8 @@ def kdtree_order(X, gridshape):
         return output
 
     # idx = point indices, pos = fixed destination slots (C-order of the grid)
-    idx_init = arange(N, 'int', reference_array=X)[None, :]
-    pos_init = arange(N, 'int', reference_array=X)[None, :]
+    idx_init = arange(N, X)[None, :]
+    pos_init = arange(N, X)[None, :]
 
     ax0 = next_axis(shape, 0)
     worklist = defaultdict(lambda: ([], []))

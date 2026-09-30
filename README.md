@@ -1,4 +1,5 @@
-## ❒ Gridpoints — Multi dimensional sort for point clouds
+## ❒ CubeNet: Multi dimensional sort for point clouds 
+with the gridpoints python package
 
 `Gridpoints` maps raw indexes of unstructured **point clouds** to structured grids multi-index  through a **bijective transformation**: 
 One point, one cell, 

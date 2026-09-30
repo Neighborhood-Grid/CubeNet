@@ -6,11 +6,29 @@ Here we just define basic primitives that we will need later
 like arange, copy, shuffle etc.
 """
 
-#This have to be promoted to float64 and int64 for very big point clouds (more than 1 billion points)
-_FLOAT = 'float32'
+#might be downgradable to float32 for speed,
+#float64 ensure that points are exactly 
+# distingishible to avoid sorting inconsistencies
+# for very close points
+_FLOAT = 'float64'
+#automatically promoted for big number 
+# of points (>= 300 millions) to avoid 
+# overflows in diagonal tricks operations
 _INT = 'int32'
+_TEMP_INT = None
 
+
+#tie breaker for very close points
 EPS = 10**(-5) if (_FLOAT == 'float32') else 10**(-10)
+
+def int64_promotion(N = 0, back=False):
+    global _INT, _TEMP_INT
+    if back:
+        _INT = _TEMP_INT
+        _TEMP_INT = None
+    elif N >= 3e8:
+        _TEMP_INT = _INT
+        _INT = 'int64'
 
 
 def get_dtype(dtp, xp):
@@ -60,9 +78,9 @@ def empty(shape, dtype_str, reference_array):
     return xp.empty(shape, dtype=dtype)
 
 
-def arange(N, dtype_str, reference_array):
+def arange(N, reference_array):
     xp, backend_name = get_backend(reference_array)
-    dtype = get_dtype(dtype_str, xp)
+    dtype = get_dtype(_INT, xp)
     if backend_name == 'torch':
         return xp.arange(N, dtype=dtype, device=reference_array.device)
     return xp.arange(N, dtype=dtype)
@@ -87,15 +105,15 @@ def random_noise(shape, reference_array, eps = None):
         rng = xp.random.default_rng(42)
         return eps * rng.random(shape)
 
-def copy(arr):
+def copy_value(arr):
     _, backend_name = get_backend(arr)
     if backend_name == 'torch':
-        return arr.clone()
+        return arr.detach().clone()
     return arr.copy()
 
 def nan_infs_to_num_and_tiebreaker(arr, safe = False):
     xp, backend = get_backend(arr)
-    out = copy(arr)
+    out = copy_value(arr)
     eps = EPS
     if safe: #better precision when adding epsilon noise tiebreaker 
         #and latter when applying diagonal rotations.
@@ -153,7 +171,7 @@ def argpartition(X, mid, axis):
     if backend_name == 'torch':
         return xp.argsort(X, dim=axis)
     else:
-        return xp.argpartition(X, mid - 1, axis=-1)
+        return xp.argpartition(X, mid - 1, axis=axis)
 
 def take_along_axis(idx, val, axis):
     xp, backend_name = get_backend(val)

@@ -8,4 +8,4 @@ __all__ = (
     "invert_permutation",
 )
 
-__version__ = "1.0.7"
+__version__ = "1.0.8"
