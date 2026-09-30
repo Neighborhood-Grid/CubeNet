@@ -32,9 +32,9 @@ where `R` is a radius cutoff to determine, allowing local operations in O(N) tim
 This allow to gridsort prime or variable number of points, as long as one is ready to deal with void/special grid cells.
 
 Expected runtime for sorting 1 million points, tested on google colab GPU T4 for 2D/3D point clouds: 
-- Numpy: < 10s
-- Torch (gpu): < 500 ms
-- Cupy (gpu): < 1 s (after compilation e.g. not on the first cold call, which take 10 s)
+- Numpy: 10s
+- Torch (gpu): 500 ms
+- Cupy (gpu): 1 s (after compilation e.g. not on the first cold call, which take 10 s)
 
 `When not to use gridpoints ?`
 - high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
