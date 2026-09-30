@@ -57,7 +57,7 @@ def argsort(X, gridshape, verbose = 2, level=2, init="kdtree", n_iter=40):
         f"gridshape={gridshape} has {len(gridshape)} entries but the points are {D}D: "
         "gridshape needs exactly one specified shape per axis. "
         "For example, with 3D points, (32, 32) is invalid (z shape is missing), "
-        "while (32, 32, 1) is valid (z size is 1)."
+        "while (32, 32, 1) is valid (z shape is 1)."
     )
     assert math.prod(gridshape) == N, (
         f"a grid with given gridshape ={gridshape} contains {math.prod(gridshape)} cells "
