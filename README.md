@@ -1,100 +1,185 @@
-## ❒ CubeNet: Multi dimensional sort for point clouds 
-with the gridpoints python package
+# Gridpoints
 
-`Gridpoints` maps raw indexes of unstructured **point clouds** to structured grids multi-index  through a **bijective transformation**: 
-One point, one cell, 
-```text
-n <-> [i,j,…](n).
+**Reorder an unstructured point cloud into a regular grid, so that neighbor-based operations become simple array slicing.**
+
+```python
+import gridpoints as grid
+points = your_dataset(100000,3) #standard (N, D) array
+order = grid.argsort(points, gridshape=(100, 100, 100))
+Pgrid = points[order].reshape(100, 100, 100, 3)   # now a (I, J, K, D) array, ready for convolution, neighbor look-ups or geometrical analysis.
 ```
-It replaces and enhances the [squarenet](https://github.com/Neighborhood-Grid/SquareNet) project with a more robust points sorting algorithm. The goal is 
-to build a spatialy coherent multi index to later store and query the point cloud efficiently, based on adaptative axes (lines, columns, and more in 3D+) as showed on following exemple :
+
+`Gridpoints` support NumPy, PyTorch and CuPy arrays. 
+The argsort reordering operation is a one-to-one assignment of your points to cells of a grid with the given gridshape. This is related to Monge optimal transport, but instead of solving for an exact optimal assignment, Gridpoints uses greedy axis-wise sorts on a high order tensor that exploit the structure of the grid. It trades optimality for scalability: 1 million 2D/3D points are sorted in about 0.5 s on a GPU (PyTorch) or 10 s on a CPU (NumPy).
 
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
-What it does: Take raw point cloud `P(N, D)`  and find a grid shape and an index permutation `order` such that `Pgrid(I, J, …, D)` = P[order].reshape(*gridshape, D) is sorted along every axis of the grid. E.g. in 3D, for Pgrid = (x, y, z):
-```text
-x[i+1, j, k] >= x[i, j, k]
-y[i, j+1, k] >= y[i, j, k]
-z[i, j, k+1] >= z[i, j, k]
-```
+---
 
-→ On the `Pgrid` view of `P`, neighbor queries become a simple stencil look-up
-```text
-neighborhood(Pgrid[i, j, k]) = {Pgrid[i±di, j±dj, k±dk] | (di, dj, dk) ≤ R},
-````
-where `R` is a radius cutoff to determine.
-→ Geometric operations (convolution, clustering, interpolation …) can then be applied **in O(N) time** directly on the `Pgrid` view instead of relying on complex graph methods.
+## TL;DR
 
-`P` can be a NumPy, PyTorch or CuPy array of any dimension (N, D). To allow natural padding when the grid has more cells than they are points in the cloud, NaNs and Infs are supported in a consistent manner: 
-- nans → random position
-- (+-) infs → border of the grid
-  
-This allow to gridsort prime or variable number of points, as long as one is ready to deal with void/special grid cells.
-
-Expected runtime for sorting 1 million points, tested on google colab GPU T4 for 2D/3D point clouds: 
-- Numpy: 10s
-- Torch (gpu): 500 ms
-- Cupy (gpu): 1 s (after compilation e.g. not on the first cold call, which take 10 s)
-
-`When not to use gridpoints ?`
-- high dimension: the package is implemented to support arbitrary dimension, but sweetspot is really 2D/3D. dimensions 4-6 might still be reasonable depending on the task, but anything above 8D is generally too high dimensional for gridpoints.
-- weird geometries. Supported datasets goes beyond smooth convex distributions: map of Indonesia, a sponge, a donuts, an elephant, an eggshell (by specifying a suitable gridshape e.g. (128,128,2) to `gridpoints.sort()`). You can see various exemples in the [plot](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots) folder But with some limits. Bad fits: a spider web, a wind turbine, same eggshell with a naive 3d sort (gridshape = (32,32,32)) ... the issue is not that gridpoints cannot sort these distributions, but that it will produce a poor representation of the geometry.
-- small point clouds: beyond a few hundred points, local operations in O(N) time is not worth the overhead, because naive quadratic implementations will probably be simultaneously simpler and faster.
+- **Problem:** point clouds are stored as a flat list `[P1, ..., PN]`. Finding the neighbors of a point usually needs a tree or a graph (KD-tree, radius graph...), which is hard to use with standard tensor based machine learning, especially on GPU.
+- **Idea:** assign every point to a cell of a D-dimensional grid, one point per cell, such that the grid is sorted along each of its axes. Then the neighbors of a point are *approximately* the points in nearby cells, found by plain indexing.
+- **Payoff:** local operations (convolution, smoothing, clustering, interpolation...) that are usually hard to implement on irregular point clouds become a matter of native primitives of common tensor libraries (shifts, slices, interp), and run in O(N).
+- **Catch:** neighborhoods are approximate, not exact (see [Limits](#limits)). It apply in low dimension only <= 7D/8D.
 
 ---
 
-### Installation
+## The problem
+
+Points are almost always stored in a one-dimensional order. You would like points that are close in space to also be close in memory, so that the nearest neighbor of `P[n]` is often `P[n±1]`, `P[n±2]`, or a bit further. This is a well-studied problem, and space-filling curves such as the Morton curve are a common solution.
+
+Gridpoints takes a different route. Instead of a 1D order, it gives each point a **multi-index** `[i, j, ...]` in a D-dimensional grid. This matters because a grid supports stencil operations: "look at the cells within a few steps in each direction" `[i±di, j±dj, k±dk]`, which is how images and volumes are processed.
+
+## What it does
+
+Input: a point cloud `P` of shape `(N, D)` and a target grid shape `(I, J, ...)`.
+
+Output: a permutation `order` of the indices such that
+
+```python
+Pgrid = P[order].reshape(I, J, ..., D)
+```
+
+is a bijection between points and grid cells (one point, one cell), and is **sorted along every axis**. In 3D, with xyz notation `P = (x, y, z)`:
+
+```text
+x[i+1, j, k] >= x[i, j, k]     # x increases along axis 0
+y[i, j+1, k] >= y[i, j, k]     # y increases along axis 1
+z[i, j, k+1] >= z[i, j, k]     # z increases along axis 2
+```
+
+This property (*grid monotonicity*) is the only thing guaranteed. See [Neighborhood radius](#neighborhood-radius) for what it does and does not imply.
+
+On `Pgrid`, a neighbor query becomes a stencil lookup:
+
+```text
+neighborhood(Pgrid[i, j, k]) ≈ { Pgrid[i±di, j±dj, k±dk] : (di, dj, dk) within radius R }
+```
+
+where `R` is a cutoff you choose for your task. Operations built on this run in **O(N)** on the grid view, instead of relying on graph or tree methods.
+
+---
+
+## Installation
 
 ```bash
 pip install gridpoints          # core only
-pip install gridpoints[demo]    # for the demonstration notebook.
+pip install gridpoints[demo]    # adds what the demo notebook needs
 ```
-Full Demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
 
-### Quickstart
+Full demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
+
+## Quickstart
 
 ```python
 import gridpoints as grid
 import numpy as np
 
-# Raw point cloud (numpy, pytorch or cupy)
-A = np.random.rand(1_000_000, 3)
+N = 1_000_000
+A = np.random.rand(N, 3)                       # raw point cloud (NumPy, PyTorch or CuPy)
 
-# Sorted view: place the points inside the grid
+# 1. Compute the permutation and view the points as a grid
 order = grid.argsort(A, gridshape=(100, 100, 100))
-Bflat = A[order] #flat but sorted with a grid layout (C-order)
-Bgrid = Bflat.reshape(100, 100, 100, 3) #reshaped as a grid 
+Bflat = A[order]                               # sorted, flat (C-order)
+Bgrid = Bflat.reshape(100, 100, 100, 3)        # grid view
 
-# Rest of your pipeline, working with grids
-Cgrid = apply_something(Bgrid) #(100, 100, 100, *)
+# 2. Work on the grid
+Cgrid = apply_something(Bgrid)                 # e.g. a convolution; shape (100, 100, 100, *)
 
-# Back to the original points indexing
-Cflat = Cgrid.reshape(1_000_000, *)
+# 3. Go back to the original point order
+Cflat = Cgrid.reshape(N, -1)
 orderinv = grid.invert_permutation(order)
-C = Cflat[orderinv]   # matches the initial points order
+C = Cflat[orderinv]                            # row n corresponds to the original point n
 ```
+
+`apply_something` stands for whatever you want to compute on the grid.
+
+`gridpoints.sort()` is also available (see the eggshell example below).
 
 ---
 
-### Note on rectangular gridshapes
+## Choosing the parameters
 
-The eggshell example illustrates the importance of selecting a suitable grid-shape decomposition. This can itself be challenging when the point cloud is assumed to follow a complex topological pattern, such as a thin surface rather than a full volumetric domain. While the precise decomposition is not particularly important (e.g. (18,20,16) vs. (16,15,24) will generally make little difference), the orders of magnitude of the different dimensions do matter and should be tuned to the dataset: (18,20,16) and (36,40,4) can lead to substantially different results. As mentioned, nan/inf padding can help accomodate integer-factorization constraints
+### Grid shape
 
-Another possibility for smoothing out topology-specific effects is to perform the sort after randomly projecting the dataset onto a lower-dimensional subspace. Random projections are known to approximately preserve pairwise distances, as formalized by the Johnson–Lindenstrauss lemma.
+The grid shape must be roughly tuned to the *kind* of data:
 
+- The exact factorization hardly matters: `(18, 20, 16)` and `(16, 15, 24)` behave similarly.
+- The **orders of magnitude** of each dimension matter a lot: `(18, 20, 16)` and `(36, 40, 4)` can give substantially different results.
+- For a thin surface (e.g. an eggshell), use a flat grid such as `(128, 128, 2)`. A naive `(32, 32, 32)` grid on the same data produces a poor representation of the geometry.
 
-### Note on the cutoff radius R
+If the number of cells exceeds the number of points, the extra cells can be padded with special values (see [Padding](#padding-with-nan-and-inf)). This lets you sort a prime or variable number of points, and solves integer-factorization constraints on the grid shape.
 
-There is no strict theoretical guarantee about what the cutof radius R should be for a given task. E.g the relative grid position between a point and its nearest neighbors can't be garanted to be in the exact adjacent grid cells. What is guaranteed from the sorted ordering is only **grid monotonicity**: *x* coordinates increase along rows, *y* coordinates along columns, and so on.
+Another option to reduce topology-specific effects is to randomly project the data onto one or many lower-dimensional subspace before sorting. Random projections approximately preserve pairwise distances (Johnson–Lindenstrauss lemma).
 
-As an example, empirical results in 2-D show that `R = 5` is enough for ~99 % of the nearest neighbors; some outlier neighbors will sit further apart for complex geometries with pronounced peaks, holes or any non-smoothness. When a stricter neighborhood is required, or in high dimensional setting, the solution might be to build an assembly of grid experts, each working on a rotated / projected view of the points, as discussed in [this topic](https://github.com/glotzerlab/freud/discussions/1417). An other possibility would be to tile the grid: each tile is enhanced with location metadata (e.g. a bounding box), allowing for pruning pairs of tiles with a distance certified to be far enough for a given criterion.
+### Neighborhood radius
 
+There is no theoretical guarantee on the radius `R` needed for a given task. Nearest neighbors are not guaranteed to land in exactly adjacent cells.
 
-### Note on efficient stencil operations
+Empirically, in 2D, `R = 5` captures about 99% of nearest neighbors. The remaining ones sit further away, mostly on complex geometries with sharp peaks, holes or other non-smooth features.
 
-The typical use-case of `Gridpoints` is to allow fast local operations on arbitrary point clouds using stencil kernels:
+If you need stricter neighborhoods, or work in higher dimension, two options:
+
+- **Ensemble of grids:** build several grids, each on a rotated or projected view of the points, and combine them (see [this discussion](https://github.com/glotzerlab/freud/discussions/1417)).
+- **Tiling:** split the grid into tiles, attach metadata to each tile (e.g. a bounding box), and skip pairs of tiles that are certifiably too far apart for your criterion.
+
+### Padding with NaN and Inf
+
+NaN and Inf values are supported in a consistent way, so that padding is natural:
+
+- `NaN` → placed at a random position
+- `±Inf` → placed on the border of the grid
+
+You have to be ready to handle these void or special cells in your pipeline.
+
+---
+
+## Performance
+
+Sorting 1 million points (2D/3D), measured on a Google Colab T4 GPU:
+
+| Backend | Time |
+|---|---|
+| NumPy | ~10 s |
+| PyTorch (GPU) | ~500 ms |
+| CuPy (GPU) | ~1 s (the first, cold call takes ~10 s because of compilation) |
+
+### Running stencil operations efficiently
+
+A typical use looks like:
 
 ```text
-output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] | di, dj, dk in local window )
+output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] )   for (di, dj, dk) in a local window
 ```
-To go beyond standard (slow) python loops, this kind of kernel computation can be accelerated with native grid convolution operations of standard libraries whenever possible, or with `pystencils` or `taichi` compilers for complex/non linear grid kernels. On GPU, tiling the grid and leveraging a custom `triton` kernel might be particularly efficient.
+
+Plain Python loops will be slow. Better options:
+
+- Native grid convolutions of standard libraries, whenever your operation can be expressed that way.
+- `pystencils` or `taichi` for complex or non-linear kernels.
+- On GPU, tiling the grid with a custom `triton` kernel can be particularly efficient.
+
+---
+
+## Limits
+
+**Good fit**
+
+- 2D and 3D point clouds, with enough points for O(N) grid operations to pay off.
+- Datasets that go beyond smooth, convex blobs: a map of Indonesia, a sponge, a donut, an elephant, an eggshell (with a suitable grid shape). Examples are in the [plots folder](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots).
+- Pipelines that benefit from regular arrays: GPU processing, convolutions, repeated local operations.
+
+**Poor fit**
+
+- **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 may be reasonable depending on the task. Above ~8D, gridpoints is generally not appropriate.
+- **Small point clouds.** Below a few hundred points, the overhead is not worth it: a naive quadratic implementation will be simpler and probably faster.
+- **Geometries that a grid represents badly**, e.g. a spider web or a wind turbine. The sort still works, but the resulting grid is a poor representation of the shape. The same applies to a good geometry with a badly chosen grid shape (the eggshell example above).
+- **Exact neighbors.** Neighborhoods are approximate; see [Neighborhood radius](#neighborhood-radius).
+
+## Should you use it?
+
+Try it if you process 2D/3D point clouds with local operations, you want regular array layouts (especially on GPU), and approximate neighborhoods are acceptable.
+
+Stay with a KD-tree or a graph method if you need exact nearest neighbors, work in high dimension, or have only a few hundred points.
+
+A quick way to decide is to run the [demo notebook](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb) on a sample of your own data and check how much of your true nearest neighbors fall within your radius `R`.
