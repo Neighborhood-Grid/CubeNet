@@ -131,7 +131,7 @@ NaN and Inf values are supported in a consistent way, so that padding is natural
 - `NaN` → placed at a random position
 - `±Inf` → placed on the border of the grid
 
-This allow to complete the true  N points with ΔN fictive points to match the nearest integer factorisation  N + ΔN = IJK⋅…
+This allow to complete the true  N points with ΔN fictive points to match the nearest integer factorisation  N + ΔN = IJK…
 
 ---
 
@@ -153,7 +153,7 @@ A typical use looks like:
 output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] )   for (di, dj, dk) in a local window
 ```
 
-To compute this kind of kernel efficiently, don't use python loops which are slow but rather:
+To compute this kind of kernel efficiently, don't use pure python loops which are known to be slow but rather:
 
 - Native grid convolutions of standard libraries, whenever your operation can be expressed that way.
 - `pystencils` or `taichi` for complex or non-linear kernels.
