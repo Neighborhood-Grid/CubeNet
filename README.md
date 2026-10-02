@@ -131,7 +131,7 @@ NaN and Inf values are supported in a consistent way, so that padding is natural
 - `NaN` → placed at a random position
 - `±Inf` → placed on the border of the grid
 
-You have to be ready to handle these void or special cells in your pipeline.
+This allow to complete the true  N points with ΔN fictive points to match the nearest integer factorisation  N + ΔN = IJK⋅…
 
 ---
 
