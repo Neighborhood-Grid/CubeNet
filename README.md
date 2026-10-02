@@ -117,7 +117,7 @@ Another option to reduce topology-specific effects is to randomly project the da
 
 There is no theoretical guarantee on the radius `R` needed for a given task. Nearest neighbors are not guaranteed to land in exactly adjacent cells.
 
-Empirically, in 2D, `R = 5` captures about 99% of nearest neighbors. The remaining ones sit further away, mostly on complex geometries with sharp peaks, holes or other non-smooth features.
+Empirically, in 2D, `R = 5` captures about 99% of nearest neighbors. Some outliers might sit further away, mostly on complex geometries with sharp peaks, holes or other non-smooth features.
 
 If you need stricter neighborhoods, or work in higher dimension, two options:
 
