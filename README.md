@@ -104,13 +104,12 @@ C = Cflat[orderinv]                            # row n corresponds to the origin
 
 ### Grid shape
 
-The grid shape must be roughly tuned to the *kind* of data:
-
+The grid shape must be roughly tuned to the *kind* of data, with the constraint that the number of points `N` have to be factorised as I*J*K*... (see pading just bellow)
 - The exact factorization hardly matters: `(18, 20, 16)` and `(16, 15, 24)` behave similarly.
 - The **orders of magnitude** of each dimension matter a lot: `(18, 20, 16)` and `(36, 40, 4)` can give substantially different results.
 - For a thin surface (e.g. an eggshell), use a flat grid such as `(128, 128, 2)`. A naive `(32, 32, 32)` grid on the same data produces a poor representation of the geometry.
 
-If the number of cells exceeds the number of points, the extra cells can be padded with special values (see [Padding](#padding-with-nan-and-inf)). This lets you sort a prime or variable number of points, and solves integer-factorization constraints on the grid shape.
+`Pading`: If the number of cells exceeds the number of points, the extra cells can be padded with special values (see [Padding](#padding-with-nan-and-inf)). This lets you sort a prime or variable number of points, and solves integer-factorization constraints on the grid shape.
 
 Another option to reduce topology-specific effects is to randomly project the data onto one or many lower-dimensional subspace before sorting. Random projections approximately preserve pairwise distances (Johnson–Lindenstrauss lemma).
 
