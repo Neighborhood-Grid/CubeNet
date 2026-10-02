@@ -21,7 +21,7 @@ The argsort reordering operation is a one-to-one assignment of your points to ce
 - **Problem:** point clouds are stored as a flat list `[P1, ..., PN]`. Finding the neighbors of a point usually needs a tree or a graph (KD-tree, radius graph...), which is hard to use with standard tensor based machine learning, especially on GPU.
 - **Idea:** assign every point to a cell of a D-dimensional grid, one point per cell, such that the grid is sorted along each of its axes. Then the neighbors of a point are *approximately* the points in nearby cells, found by plain indexing.
 - **Payoff:** local operations (convolution, smoothing, clustering, interpolation...) that are usually hard to implement on irregular point clouds, can be applyed on the grid: `points -> grid`. To recover the result on the points, one just apply the invert assignement: `grid -> points`. 
-- **Catch:** neighborhoods are approximate, not exact (see [Limits](#limits)). It apply in low dimension only <= 7D/8D.
+- **Catch:** grid neighborhoods are approximate, not exact (see [Limits](#limits)). It apply in low dimension only <= 7D/8D.
 
 ---
 
