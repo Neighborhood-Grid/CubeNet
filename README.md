@@ -153,7 +153,7 @@ A typical use looks like:
 output(i, j, k) = f( Pgrid[i±di, j±dj, k±dk] )   for (di, dj, dk) in a local window
 ```
 
-Plain Python loops will be slow. Better options:
+To compute this kind of kernel efficiently, don't use python loops which are slow but rather:
 
 - Native grid convolutions of standard libraries, whenever your operation can be expressed that way.
 - `pystencils` or `taichi` for complex or non-linear kernels.
