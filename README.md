@@ -5,8 +5,8 @@
 ```python
 import gridpoints as grid
 points = your_dataset(100000,3) #standard (N, D) array
-order = grid.argsort(points, gridshape=(100, 100, 100))
-Pgrid = points[order].reshape(100, 100, 100, 3)   # now a (I, J, K, D) array, ready for convolution, neighbor look-ups or geometrical analysis.
+order = grid.argsort(points, gridshape=(100, 100, 100))  #set gridshape: (I,J,K) = (100,100,100)
+Pgrid = points[order].reshape(100, 100, 100, 3)   # now a (I, J, K, D) version of your dataset, ready for convolution, neighbor look-ups or geometrical analysis.
 ```
 
 `Gridpoints` support NumPy, PyTorch and CuPy arrays. 
