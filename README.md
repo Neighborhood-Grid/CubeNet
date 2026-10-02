@@ -1,6 +1,6 @@
 # Gridpoints
 
-**Reorder an unstructured point cloud into a regular grid, so that neighbor-based operations become simple array slicing.**
+**Reorder an unstructured point cloud into a regular grid, so that neighbor-based operations become simple grid processing.**
 
 ```python
 import gridpoints as grid
