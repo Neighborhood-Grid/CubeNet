@@ -171,7 +171,7 @@ To compute this kind of kernel efficiently, don't use pure python loops which ar
 
 **Poor fit**
 
-- **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 may be reasonable depending on the task. Above ~8D, gridpoints is generally not appropriate.
+- **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 are still reasonable. Above ~8D, gridpoints is generally not appropriate.
 - **Small point clouds.** Below a few hundred points, the overhead is not worth it: a naive quadratic implementation will be simpler and probably faster.
 - **Geometries that a grid represents badly**, e.g. a spider web or a wind turbine. The sort still works, but the resulting grid is a poor representation of the shape. The same applies to a good geometry with a badly chosen grid shape (the eggshell example above).
 - **Exact neighbors.** Neighborhoods are approximate; see [Neighborhood radius](#neighborhood-radius).
