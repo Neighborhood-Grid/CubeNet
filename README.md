@@ -104,7 +104,7 @@ C = Cflat[orderinv]                            # row n corresponds to the origin
 
 ### Grid shape
 
-The grid shape must be roughly tuned to the *kind* of data, with the constraint that the number of points `N` have to be factorised as I*J*K*...
+The grid shape must be roughly tuned to the *kind* of data, with the constraint that the number of points `N` have to be factorised as IxJxKx...
 - The exact factorization hardly matters: `(18, 20, 16)` and `(16, 15, 24)` behave similarly.
 - The **orders of magnitude** of each dimension matter a lot: `(18, 20, 16)` and `(36, 40, 4)` can give substantially different results.
 - For a thin surface (e.g. an eggshell), use a flat grid such as `(128, 128, 2)`. A naive `(32, 32, 32)` grid on the same data produces a poor representation of the geometry.
