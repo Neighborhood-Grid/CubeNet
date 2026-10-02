@@ -126,7 +126,7 @@ If you need stricter neighborhoods, or work in higher dimension, two options:
 
 ### Padding with NaN and Inf
 
-NaN and Inf values are supported in a consistent way, so that padding is natural:
+NaN and Inf values are supported in a consistent way by the package, so that padding is natural:
 
 - `NaN` → placed at a random position
 - `±Inf` → placed on the border of the grid
