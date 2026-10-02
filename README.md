@@ -11,7 +11,7 @@ Pgrid = points[order].reshape(100, 100, 100, 3)   # now a (I, J, K, D) version o
 ```
 
 `Gridpoints` support NumPy, PyTorch and CuPy arrays. 
-The argsort reordering operation is a one-to-one assignment of your points to cells of a grid with the given gridshape. This is related to Monge optimal transport, but `grid.argsort()` trades optimality for scalability, by combining greedy axial operations which exploit the specific structure of grids. 1 million 2D/3D points are sorted in about 0.5 s on a GPU (PyTorch) or 10 s on a CPU (NumPy).
+The argsort reordering operation is a one-to-one assignment of your points to cells of a grid with the given gridshape. This is related to Monge optimal transport, but `gridpoints.argsort()` trades optimality for scalability, by combining greedy axial operations which exploit the specific structure of grids. 1 million 2D/3D points are sorted in about 0.5 s on a GPU (PyTorch) or 10 s on a CPU (NumPy).
 
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/ballexemple.png">
 
