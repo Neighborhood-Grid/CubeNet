@@ -166,7 +166,7 @@ To compute this kind of kernel efficiently, avoid pure Python loops, which are s
 
 - **Low-dimensional point clouds.** 2D and 3D are the sweet spot, with enough points for O(N) grid operations to pay off.
 - **Pipelines that benefit from regular arrays:** GPU processing, convolutions, repeated local operations.
-- **Nice geometries.** "Nice" is deliberately informal. The question is: can you mentally spread your point distribution onto a regular box with the specified dimensions without your brain blowing up in the process? This requires neither convexity (a map of France, a sponge, a donut, an elephant, an eggshell are valid) nor connectedness (clusters and blobs are valid, Gridpoints just glues them together). Examples are in the [plots folder](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots).
+- **Nice geometries.** "Nice" is deliberately informal. The question is: can you mentally spread your point distribution onto a regular box with the specified dimensions without your brain blowing up in the process? Note that this requires neither convexity (a map of France, a sponge, a donut, an elephant, an eggshell are valid) nor connectedness (clusters and blobs are valid, Gridpoints just glues them together). Examples are in the [plots folder](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots).
 
 **Poor fit**
 
