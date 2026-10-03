@@ -92,7 +92,7 @@ Cgrid = apply_something(Bgrid)                 # e.g. a convolution; shape (100,
 # 3. Go back to the original point order
 Cflat = Cgrid.reshape(N, -1)
 orderinv = grid.invert_permutation(order)
-C = Cflat[orderinv]                            # row n corresponds to the original point n
+C = Cflat[orderinv]                            # back to original points indexing.
 ```
 
 `apply_something` stands for whatever you want to compute on the grid.
