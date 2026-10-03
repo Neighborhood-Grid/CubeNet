@@ -167,16 +167,15 @@ To compute this kind of kernel efficiently, don't use pure python loops which ar
 **Good fit**
 
 - 2D and 3D point clouds, with enough points for O(N) grid operations to pay off.
-- Datasets that go beyond smooth, convex blobs: a map of Indonesia, a sponge, a donut, an elephant, an eggshell (with a suitable grid shape). Examples are in the [plots folder](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots).
+- Nice geometries. The question is: can you mentally spread your point distribution onto a regular box with the specified dimensions without your brain blowing up in the process ? To emphasis on that this doesn't require convexity (a map of France, a sponge, a donut, an elephant, an eggshell are valid) or connexity (clusters, blobs are valid, gridpoints just glue them together). Examples are in the [plots folder](https://github.com/Neighborhood-Grid/CubeNet/blob/main/plots).
 - Pipelines that benefit from regular arrays: GPU processing, convolutions, repeated local operations.
 
 **Poor fit**
 
 - **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 are still reasonable. Above ~8D, gridpoints is generally not appropriate.
 - **Small point clouds.** Below a few hundred points, the overhead is not worth it: a naive quadratic implementation of your kernels will be simpler and probably faster.
-- **Geometries that a grid represents badly**, e.g. a spider web or a wind turbine. The sort still works, but the resulting grid is a poor representation of the shape. The same applies to a good geometry with a badly chosen grid shape (the eggshell example above).
-- **Exact neighbors.** Neighborhoods are approximate; see [Neighborhood radius](#neighborhood-radius).
-
+- **Anti-grid geometries**. A spider web, a wind turbine... The sort still runs, but a single grid sort gives a poor representation of the structure. For such distributions, you will need a projection + grid ensemble procedure, which curently must be set up manually. That may make gridpoints less attractive if you were looking for a light, out-of-the-box gridification framework. I am working on making this more automatic, and I hope that at some point gridpoints will be easily applicable to any geometry. Updates will be posted here!
+  
 ## Should you use it?
 
 Try it if you process 2D/3D point clouds with local operations, you want regular array layouts (especially on GPU), and approximate neighborhoods are acceptable.
