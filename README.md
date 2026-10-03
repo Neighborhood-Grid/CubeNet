@@ -4,7 +4,7 @@
 
 ```python
 import gridpoints as grid
-points = your_dataset(100000,3) #standard (N, D) array
+points = your_dataset_of_points(1000000,3) #standard (N, D) array
 order = grid.argsort(points, gridshape=(100, 100, 100))  #set gridshape: (I,J,K) = (100,100,100)
 Pgrid = points[order].reshape(100, 100, 100, 3)   # now a (I, J, K, D) version of your dataset.
 #Ready for convolution, neighbor look-ups or geometrical analysis.
@@ -97,7 +97,7 @@ C = Cflat[orderinv]                            # back to original points indexin
 
 `apply_something` stands for whatever you want to compute on the grid.
 
-`gridpoints.sort()` is also available (see the eggshell example below).
+`gridpoints.sort()` is also available.
 
 ---
 
