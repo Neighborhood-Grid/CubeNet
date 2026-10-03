@@ -30,7 +30,8 @@ The argsort reordering operation is a one-to-one assignment of your points to ce
 
 Points are almost always stored in a one-dimensional order. You would like points that are close in space to also be close in memory, so that the nearest neighbor of `P[n]` is often `P[n±1]`, `P[n±2]`, or a bit further. This is a well-studied problem, and space-filling curves such as the Morton curve are a common solution.
 
-Gridpoints takes a different route. Instead of a 1D order, it gives each point a **multi-index** `[i, j, ...]` in a D-dimensional grid. This matters because a grid supports stencil operations: "look at the cells within a few steps in each direction" `[i±di, j±dj, k±dk]`, which is how images and volumes are processed.
+Gridpoints takes a different route. Instead of a 1D order, it gives each point a **multi-index** `[i, j, ...]` in a D-dimensional grid. This matters because a grid supports stencil operationswhich is how images and volumes are processed.
+: "look at the cells within a few steps in each direction" `[i±di, j±dj, k±dk]`.
 
 ## What it does
 
