@@ -62,6 +62,14 @@ where `R` is a cutoff you choose for your task. Operations built on this run in 
 
 ---
 
+## Sorting algorithm
+
+To get the main ideas, the core of the sorting algorithm is 
+1. initialisation: a good starting assignement is important both for quick convergence, and to converge on an assignement with good neighborhood properties. `gridpoints` initialiser build a kdtree on the points, and convert the tree cuts to a grid structure
+2. iterative 1d sorts: once the initial assignement is built, `gridpoints` further optimise it iteratively by looking at 1d slices of the grid (axial slices, but also diagonal ones), and apply standard 1d sort on the points, projected along the direction of the slice.
+
+For interested readers, the full sorting procedure and motivation behind is explained in more details [here](https://github.com/Neighborhood-Grid/Cartesian-Grid-Sort). 
+
 ## Installation
 
 ```bash
