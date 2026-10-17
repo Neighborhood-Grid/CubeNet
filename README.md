@@ -32,7 +32,7 @@ Points are almost always stored in a one-dimensional order. You would like point
 
 Gridpoints takes a different route. Instead of a 1D order, it gives each point a **multi-index** `[i, j, ...]` in a D-dimensional grid. This matters because a grid supports stencil operations ("look at the cells within a few steps in each direction", `[i±di, j±dj, k±dk]`), which is how images and volumes are processed.
 
-## What it does
+## What Gridpoints does
 
 Input: a point cloud `P` of shape `(N, D)` and a target grid shape `(I, J, ...)`.
 
@@ -62,11 +62,11 @@ where `R` is a cutoff you choose for your task. Operations built on this run in 
 
 ---
 
-## Sorting algorithm
+## Internal algorithm
 
-To get the main ideas, the core of the sorting algorithm is 
-1. initialisation: a good starting assignement is important both for quick convergence, and to converge on an assignement with good neighborhood properties. `gridpoints` initialiser build a kdtree on the points, and convert the tree cuts to a grid structure
-2. iterative 1d sorts: once the initial assignement is built, `gridpoints` further optimise it iteratively by looking at 1d slices of the grid (axial slices, but also diagonal ones), and apply standard 1d sort on the points, projected along the direction of the slice.
+To get the main ideas of the sorting algorithm, the core of `gridpoints` is:
+1. initialisation: a good starting assignement is important both for quick convergence, and to converge on an assignement with good neighborhood properties. The initialiser build a kdtree on the points, and convert the tree cuts to a grid structure
+2. iterative 1d sorts: once the initialiser built the starting assignement, gridpoints further optimise it iteratively by looking at 1d slices of the grid (axial slices, but also diagonal ones), and apply standard 1d sort on the points, projected along the direction of the slice.
 
 For interested readers, the full sorting procedure and motivation behind is explained in more details [here](https://github.com/Neighborhood-Grid/Cartesian-Grid-Sort). 
 
