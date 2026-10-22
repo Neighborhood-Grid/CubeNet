@@ -178,7 +178,7 @@ To compute this kind of kernel efficiently, avoid pure Python loops, which are s
 
 **Poor fit**
 
-- **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 are still reasonable. Above ~8D, Gridpoints is generally not appropriate.
+- **High dimension.** Arbitrary dimension is supported, but the sweet spot is 2D/3D. Dimensions 4 to 6 are still reasonable. Above ~8D, Gridpoints is generally not appropriate. Note that many powerful dimension reduction technique exists beyond random projections ensemble or principal component analysis. Modern ml tools such as auto-encoders or parametric umap could maybe help to convert high dimensional data to the low dimensional framework of gridpoints.
 - **Small point clouds.** Below a few hundred points, the overhead is not worth it: a naive quadratic implementation of your kernels will be simpler and probably faster.
 - **Anti-grid geometries.** A spider web, a wind turbine... The sort still runs, but a single grid sort gives a poor representation of the structure. For such distributions, you currently need a projection + grid ensemble procedure, which must be set up manually. That may make Gridpoints less attractive if you were looking for a light, out-of-the-box gridification framework. I am working on making this more automatic, and I hope that at some point Gridpoints will be easily applicable to a much wider range of geometries. Updates will be posted here!
 
