@@ -5,9 +5,10 @@
 ```python
 import gridpoints as grid
 points = your_dataset_of_points(1000000, 3)  # standard (N, D) array
-order = grid.argsort(points, gridshape=(100, 100, 100))  # set gridshape: (I, J, K) = (100, 100, 100)
-Pgrid = points[order].reshape(100, 100, 100, 3)  # now an (I, J, K, D) version of your dataset
+order = grid.argsort(points, gridshape=(100, 100, 100))  # set gridshape: (I, J, K, ...) = (100, 100, 100)
+Pgrid = points[order].reshape(100, 100, 100, 3)  # now an (I, J, K, ...,  D) version of your dataset
 # Ready for convolution, neighbor look-ups or geometrical analysis.
+# Note that grid.argsort also supports a batch mode (B, N, D) -> (B, I, J, K, ..., D)
 ```
 
 Gridpoints supports NumPy, PyTorch and CuPy arrays.
@@ -138,7 +139,7 @@ NaN and Inf values are supported in a consistent way by the package, so that pad
 - `NaN` → placed at a random position
 - `±Inf` → placed on the border of the grid
 
-This lets you complete the N real points with ΔN fictitious points so that N + ΔN = I⋅J⋅K⋅…
+This lets you complete the N real points with ΔN fictitious points so that N + ΔN = I⋅J⋅K⋅… , using `gridpoints.pad`
 
 ---
 
