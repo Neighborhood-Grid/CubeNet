@@ -128,7 +128,7 @@ Empirically, in 2D, `R = 5` captures about 99% of nearest neighbors. Some outlie
 
 If you need stricter neighborhoods, or work in higher dimension, there are two options:
 
-- **Ensemble of grids:** build several grids, each on a rotated or projected view of the points, and combine them (see https://arxiv.org/abs/1505.00880). Projecting the data randomly onto one or several lower-dimensional subspaces before sorting also helps reduce topology-specific effects, since random projections approximately preserve pairwise distances (Johnson–Lindenstrauss lemma).
+- **Ensemble of grids:** build several grids, each on a rotated or projected view of the points, and combine them (see https://arxiv.org/abs/1505.00880 for the concept of multi view pooling). Projecting the data randomly onto one or several lower-dimensional subspaces before sorting also helps reduce topology-specific effects, since random projections approximately preserve pairwise distances (Johnson–Lindenstrauss lemma).
 - **Tiling:** if you need *exact* neighbors, tiling gives them. Split the grid into tiles, attach metadata to each tile (e.g. a bounding box), and skip pairs of tiles that are certifiably too far apart for your criterion. The grid does the bulk of the work; the tiles only certify or correct the rest.
 
 ### Padding with NaN and Inf
