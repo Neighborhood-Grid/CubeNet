@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gridpoints"
-version = "1.0.8"
+version = "1.1.0"
 description = "fast multidimensional sorting tool for point clouds using the monotonic lagrangian grid "
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,8 +26,8 @@ demo = [
 
 
 [project.urls]
-Homepage = "https://github.com/Neighborhood-Grid/CubeNet"
-Repository = "https://github.com/Neighborhood-Grid/CubeNet"
+Homepage = "https://neighborhood-grid.github.io/gridpoints/"
+Repository = "https://github.com/Neighborhood-Grid/gridpoints"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -2,28 +2,24 @@
 Helpers:
 Unified array syntax to support numpy, cupy and pytorch arrays
 
-Here we just define basic primitives that we will need later 
+Here we just define basic primitives that we will need later
 like arange, copy, shuffle etc.
 """
 
-#might be downgradable to float32 for speed,
-#float64 ensure that points are exactly 
-# distingishible to avoid sorting inconsistencies
-# for very close points
-_FLOAT = 'float64'
-# might be downgraded to 'int32' for < 300 million 
-# points point cloud
-_INT = 'int64'
 
-#tie breaker for very close points
-EPS = 10**(-5) if (_FLOAT == 'float32') else 10**(-10)
+def precision(N):
+    """Names of the (float, int) dtypes suited to point clouds of N points.
+
+    - float32 resolves the gaps (~1/N) between neighbouring points only up to
+      a few 10**4 points, float64 is used beyond.
+    - the diagonal sorts store values up to 6N: int32 is safe up to N ~ 3.5e8.
+    """
+    return ('float32' if N <= 2**16 else 'float64'), ('int32' if 6 * N < 2**31 else 'int64')
 
 
 def get_dtype(dtp, xp):
-    if dtp == 'float':
-        dtp = _FLOAT
-    elif dtp in ('int', 'integer'):
-        dtp = _INT
+    if dtp == 'bool':
+        return getattr(xp, 'bool_', None) or xp.bool
     return getattr(xp, dtp) if isinstance(dtp, str) else dtp
 
 
@@ -45,7 +41,7 @@ def astype(X, dtype_str, reference_array=None):
     if backend_name == 'torch':
         device = reference_array.device if reference_array is not None else X.device
         return X.to(dtype=dtype, device=device)
-    return X.astype(dtype)
+    return X.astype(dtype, copy=False)
 
 
 def inplace_sort(X, axis):
@@ -58,85 +54,87 @@ def inplace_sort(X, axis):
         X.sort(axis=axis)
 
 
-def empty(shape, dtype_str, reference_array):
+def sort(X, axis):
+    xp, backend_name = get_backend(X)
+    return X.sort(dim=axis)[0] if backend_name == 'torch' else xp.sort(X, axis=axis)
+
+
+def _alloc(fn, shape, dtype_str, reference_array):
     xp, backend_name = get_backend(reference_array)
     dtype = get_dtype(dtype_str, xp)
     if backend_name == 'torch':
-        return xp.empty(shape, dtype=dtype, device=reference_array.device)
-    return xp.empty(shape, dtype=dtype)
+        return getattr(xp, fn)(shape, dtype=dtype, device=reference_array.device)
+    return getattr(xp, fn)(shape, dtype=dtype)
 
-def arange(N, reference_array):
+def empty(shape, dtype_str, reference_array):
+    return _alloc('empty', shape, dtype_str, reference_array)
+
+def zeros(shape, dtype_str, reference_array):
+    return _alloc('zeros', shape, dtype_str, reference_array)
+
+def ones(shape, dtype_str, reference_array):
+    return _alloc('ones', shape, dtype_str, reference_array)
+
+
+def arange(N, dtype_str, reference_array):
     xp, backend_name = get_backend(reference_array)
-    dtype = get_dtype(_INT, xp)
+    dtype = get_dtype(dtype_str, xp)
     if backend_name == 'torch':
         return xp.arange(N, dtype=dtype, device=reference_array.device)
     return xp.arange(N, dtype=dtype)
 
-def argmax(arr, axis):
-    xp, backend_name = get_backend(arr)
-    if backend_name == 'torch':
-        if arr.dtype == xp.bool:
-            arr = arr.to(xp.int32)
-        return arr.argmax(dim=axis)
-    return arr.argmax(axis=axis)
-
-def random_noise(shape, reference_array, eps = None):
-    if eps is None:
-        eps = EPS
+def random(shape, dtype_str, reference_array):
+    """Uniform random numbers in [0, 1)."""
     xp, backend_name = get_backend(reference_array)
+    dtype = get_dtype(dtype_str, xp)
     if backend_name == 'torch':
-        return eps * xp.rand(*shape, device=reference_array.device)
+        return xp.rand(shape, dtype=dtype, device=reference_array.device)
     elif backend_name == 'cupy':
-        return eps * xp.random.rand(*shape)
-    else:
-        rng = xp.random.default_rng(42)
-        return eps * rng.random(shape)
+        return xp.random.rand(*shape).astype(dtype)
+    return xp.random.default_rng(42).random(shape, dtype=dtype)
 
-def copy_value(arr):
+def copy(arr):
     _, backend_name = get_backend(arr)
     if backend_name == 'torch':
-        return arr.detach().clone()
+        return arr.clone()
     return arr.copy()
 
-def nan_infs_to_num_and_tiebreaker(arr):
-    xp, backend = get_backend(arr)
-    out = copy_value(arr)
+def amax(X, axis):
+    return X.amax(axis) if get_backend(X)[1] == 'torch' else X.max(axis)
 
-    for d in range(arr.shape[1]):
-        x = arr[:, d]
-        finite = xp.isfinite(x)
-        vals = x[finite]
-
-        if not (
-            finite.any().item() if backend == 'torch' else bool(finite.any())
-        ):
-            vals = xp.zeros_like(x)
-        
-
-        out[xp.isposinf(x), d] = vals.max() + 1
-        out[xp.isneginf(x), d] = vals.min() - 1
-
-        nan = xp.isnan(x)
-        n = nan.sum().item() if backend == 'torch' else int(nan.sum())
-        if n:
-            idx = (xp.randint(len(vals), (n,), device=arr.device)
-                   if backend == 'torch' else xp.random.randint(len(vals), size=n))
-            out[nan, d] = vals[idx]
-
-    return out + random_noise(out.shape, out)
+def amin(X, axis):
+    return X.amin(axis) if get_backend(X)[1] == 'torch' else X.min(axis)
 
 def all_true(tensor):
-    _, backend_name = get_backend(tensor)
-    if backend_name == 'torch':
-        return tensor.all().item()
     return bool(tensor.all())
 
-def random_permutation(arr):
-    xp, backend_name = get_backend(arr)
-    if backend_name == 'torch':
-        perm = xp.randperm(len(arr), device=arr.device)
-        return arr[perm]
-    return xp.random.permutation(arr)
+def any_true(tensor):
+    return bool(tensor.any())
+
+
+def nan_infs_to_num_and_tiebreaker(arr):
+    """Make a batch of clouds (B, N, D) finite, and break ties with a tiny noise.
+
+    +inf / -inf are put just beyond the finite points of their cloud and axis
+    (they end up on the border of the grid), NaN are replaced by the value of a
+    random finite point of their cloud and axis (they end up anywhere).
+    """
+    xp, _ = get_backend(arr)
+    out = arr
+    finite = xp.isfinite(arr)
+    if not all_true(finite):
+        hi = amax(xp.where(finite, arr, -xp.inf), 1)[:, None, :]
+        lo = amin(xp.where(finite, arr, xp.inf), 1)[:, None, :]
+        out = xp.where(xp.isposinf(arr), hi + 1, arr)
+        out = xp.where(xp.isneginf(arr), lo - 1, out)
+        nan = xp.isnan(arr)
+        if any_true(nan):
+            finite_first = sort(xp.where(finite, arr, xp.inf), 1)
+            n_finite = finite.sum(1)[:, None, :]
+            pick = astype(random(arr.shape, arr.dtype, arr) * n_finite, 'int64')
+            out = xp.where(nan, take_along_axis(finite_first, pick, 1), out)
+    eps = 1e-5 if '32' in str(arr.dtype) else 1e-10
+    return out + eps * random(out.shape, arr.dtype, out)
 
 def flip(X, axis=None):
     xp, _ = get_backend(X)
@@ -153,19 +151,24 @@ def flip(X, axis=None):
 
     return xp.flip(X, axis=axis)
 
-def argpartition(X, mid, axis):
+def argsort(X):
+    xp, backend_name = get_backend(X)
+    return xp.argsort(X, dim=-1) if backend_name == 'torch' else xp.argsort(X, axis=-1)
+
+def argpartition(X, mid):
+    """Indices that put the `mid` smallest values of the last axis first."""
     xp, backend_name = get_backend(X)
     if backend_name == 'torch':
-        return xp.argsort(X, dim=axis)
+        return xp.argsort(X, dim=-1)
     else:
-        return xp.argpartition(X, mid - 1, axis=axis)
+        return xp.argpartition(X, mid - 1, axis=-1)
 
-def take_along_axis(idx, val, axis):
-    xp, backend_name = get_backend(val)
+def take_along_axis(arr, idx, axis):
+    xp, backend_name = get_backend(arr)
     if backend_name == 'torch':
-        return xp.take_along_dim(idx, val, dim=axis)
+        return xp.take_along_dim(arr, idx.long(), dim=axis)
     else:
-        return xp.take_along_axis(idx, val, axis=axis)
+        return xp.take_along_axis(arr, idx, axis=axis)
 
 def concatenate(arrays, axis = 0):
     xp, name = get_backend(arrays[0])

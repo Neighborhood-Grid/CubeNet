@@ -1,21 +1,33 @@
 """
 Helpers:
-Diagonal trick is based on a tensor rotation that allow 
+Diagonal trick is based on a tensor rotation that allow
 to sort arrays efficiently along arbitrary diagonal fibers.
+
+All functions work on a batch of grids X of shape (B, ...), and tell for each
+grid of the batch whether it was already sorted.
 """
 
+import math
 
 from .array_libs import (
     get_backend,
     arange,
     inplace_sort,
-    all_true
 )
 
+
+def sorted_flags(X, axis):
+    """Bool array of shape (B,): is each grid of the batch X sorted along `axis`?"""
+    axis %= X.ndim
+    sl = lambda s: (slice(None),) * axis + (s,)
+    ok = X[sl(slice(1, None))] >= X[sl(slice(None, -1))]
+    return ok.reshape(len(X), math.prod(ok.shape[1:])).all(1)
+
+
 def sort_diag_trick(X):
-    """ 
-    we rotate the tensor along the main diagonal 
-    to place diagonals on the last axis, then 
+    """
+    we rotate the tensor along the main diagonal
+    to place diagonals on the last axis, then
     perform a standard sort(axis = -1), and
     rotate back the diagonals
     """
@@ -27,34 +39,34 @@ def sort_diag_trick(X):
     n, m = X.shape[-2:]
 
     #move the smallest axis to last position
-    if m > n: 
-        X = xp.moveaxis(X, [-1, -2], [-2, -1]) 
+    if m > n:
+        X = xp.moveaxis(X, [-1, -2], [-2, -1])
         n, m = m, n #now n >= m
-        
-    i = arange(n, X)[:, None]
-    j = arange(m, X)[None, :]
-    
+
+    i = arange(n, X.dtype, X)[:, None]
+    j = arange(m, X.dtype, X)[None, :]
+
     di = (i - j)
     i_ = di % n
-    ires = di // n 
-    groupkey = bigM * ires 
-    
+    ires = di // n
+    groupkey = bigM * ires
+
     X[..., i_, j] = X[..., i, j] - groupkey #Rotation
     # ========================
     # here is the trick: as we rotated the tensor
     # sorting on the diagonal is just working on
     # axis -1 of the rotated view
     # ========================
-    was_sorted = all_true(xp.diff(X, axis=-1) >= 0)
+    was_sorted = sorted_flags(X, -1)
     inplace_sort(X, axis=-1)
     X[..., i, j] = X[..., i_, j] + groupkey
-    
+
     return was_sorted
 
 def sort_tridiag_trick(X):
-    """ 
-    we rotate the tensor along the tridiagonal, 
-    then perform a standard sort(axis = -1), 
+    """
+    we rotate the tensor along the tridiagonal,
+    then perform a standard sort(axis = -1),
     and rotate back the tridiagonals
     """
     xp, _ = get_backend(X)
@@ -66,29 +78,29 @@ def sort_tridiag_trick(X):
     abc = X.shape
     dst_axes = (-3, -2, -1)
     src_axes = tuple(sorted(dst_axes, key=lambda ax: -abc[ax]))
-    X = xp.moveaxis(X, src_axes, dst_axes)   
-    a, b, c = X.shape[-3:]  # now a >= b >= c 
-    
-    i = arange(a, X)[:, None, None]
-    j = arange(b, X)[None, :, None]
-    k = arange(c, X)[None, None, :]
-    
+    X = xp.moveaxis(X, src_axes, dst_axes)
+    a, b, c = X.shape[-3:]  # now a >= b >= c
+
+    i = arange(a, X.dtype, X)[:, None, None]
+    j = arange(b, X.dtype, X)[None, :, None]
+    k = arange(c, X.dtype, X)[None, None, :]
+
     di = i - k
     dj = j - k
     di_ = di % a
     dj_ = dj % b
-    dires = di // a         
+    dires = di // a
     djres = dj // b
     groupkey = bigM * (dires * 4 + djres)
-    
+
     X[..., di_, dj_, k] = X[..., i, j, k] - groupkey #Trirotation
     # ========================
     # Again, thanks to the rotation trick
     # we just need to .sort(X, axis = -1)
     # to sort the tridiagonal
     # ========================
-    was_sorted = all_true(xp.diff(X, axis=-1) >= 0)
-    inplace_sort(X, axis=-1)  
+    was_sorted = sorted_flags(X, -1)
+    inplace_sort(X, axis=-1)
     X[..., i, j, k] = X[..., di_, dj_, k] + groupkey
-    
+
     return was_sorted

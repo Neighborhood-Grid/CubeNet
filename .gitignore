@@ -2,5 +2,6 @@ __pycache__/
 *.pyc
 dist/
 build/
+sqrnet/
 test.ipynb
 *.egg-info/
