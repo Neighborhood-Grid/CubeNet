@@ -84,6 +84,8 @@ Full demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/ma
 To play with real life objects from the Modelnet40 dataset, first get modelnet40 from [princeton.edu](http://modelnet.cs.princeton.edu)  (~2 GB), then:
 ```
 python modelnet40_demo.py --obj table --num 6
+python modelnet40_demo.py --obj airplane --num 1
+...
 ```
 Animated figures (morphing from the raw  point cloud to a cubic grid) will be saved to sqrnet\plot.gif
 
