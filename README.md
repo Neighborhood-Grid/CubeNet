@@ -80,8 +80,6 @@ pip install gridpoints          # core only
 pip install gridpoints[demo]    # adds what the demo notebook needs
 ```
 
-Full demo: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
-
 ## Demo 1. modelnet40:
 To play with real life objects from the Modelnet40 dataset, first get modelnet40 from [princeton.edu](http://modelnet.cs.princeton.edu)  (~2 GB), then:
 ```
