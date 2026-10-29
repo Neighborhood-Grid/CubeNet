@@ -1,5 +1,8 @@
 # Gridpoints
 
+[![PyPI](https://img.shields.io/pypi/v/gridpoints?logo=pypi&logoColor=white)](https://pypi.org/project/gridpoints/)
+[![GitHub](https://img.shields.io/badge/GitHub-gridpoints-181717?logo=github)](https://github.com/Neighborhood-Grid/gridpoints)
+
 <img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/plots/table(1).gif">
 
 **Reorder an unstructured point cloud into a regular grid, so that neighbor-based operations become simple grid processing.**
@@ -77,7 +80,7 @@ For interested readers, the full sorting procedure and motivation behind is expl
 
 ```bash
 pip install gridpoints          # core only
-pip install gridpoints[demo]    # adds what the demo notebook needs
+pip install gridpoints[demo]    # adds visualisation tools for the demo
 ```
 
 ## Demo 1. modelnet40:
