@@ -1,6 +1,6 @@
 # Gridpoints
 
-<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/plots/table.gif">
+<img src="https://raw.githubusercontent.com/Neighborhood-Grid/CubeNet/main/plots/table.mp4">
 
 **Reorder an unstructured point cloud into a regular grid, so that neighbor-based operations become simple grid processing.**
 
