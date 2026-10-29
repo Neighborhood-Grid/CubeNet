@@ -85,6 +85,7 @@ To play with real life objects from the Modelnet40 dataset, first get modelnet40
 ```
 python modelnet40_demo.py --obj table --num 6
 ```
+Animated figures (morphing from the raw  point cloud to a cubic grid) will be saved to sqrnet\plot.gif
 
 ## Demo 2. big point clouds:
 To test gridpoints on various synthetic datasets, see the notebook: [notebook.ipynb](https://github.com/Neighborhood-Grid/CubeNet/blob/main/notebook.ipynb)
