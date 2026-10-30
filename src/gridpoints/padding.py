@@ -2,7 +2,7 @@
 Helper to complete point clouds so that they fit a grid.
 """
 
-from .array_libs import arange, astype, empty
+from .array_libs import arange, astype, empty, get_backend
 
 
 def pad(X, n_total, value="nan"):
@@ -26,23 +26,31 @@ def pad(X, n_total, value="nan"):
     X_padded : array (n_total, D) or (B, n_total, D)
     """
     assert value in ("nan", "inf"), f"value must be 'nan' or 'inf', got {value!r}"
-    single = hasattr(X, 'ndim') and X.ndim == 2
-    clouds = [X] if single else list(X)
-    assert max(len(c) for c in clouds) <= n_total, "more points than n_total"
+    is_array = hasattr(X, 'ndim')
+    ref = X if is_array else X[0]
+    assert (X.shape[-2] if is_array else max(len(c) for c in X)) <= n_total, "more points than n_total"
 
-    ref = clouds[0]
     dtype = str(ref.dtype).replace('torch.', '')
     if 'float' not in dtype:   # integers cannot hold nan / inf
         dtype = 'float64'
     D = ref.shape[-1]
-    out = empty((len(clouds), n_total, D), dtype, ref)
-    out[...] = float(value)
+    shape = (n_total, D) if is_array and X.ndim == 2 else (len(X), n_total, D)
 
-    for b, cloud in enumerate(clouds):
-        out[b, :len(cloud)] = astype(cloud, dtype)
-        if value == "inf":   # point k gets the signs given by the bits of k, one per coordinate
-            k = arange(n_total - len(cloud), 'int64', ref)[:, None]
-            bits = (k >> (D - 1 - arange(D, 'int64', ref))[None, :]) & 1
-            out[b, len(cloud):] = astype(1 - 2 * bits, dtype) * float("inf")
+    # 1. Prefill with nan, then copy the true points in.
+    out = empty(shape, dtype, ref)
+    out[...] = float('nan')
+    if is_array:
+        out[..., :X.shape[-2], :] = astype(X, dtype)
+    else:
+        for b, cloud in enumerate(X):
+            out[b, :len(cloud)] = astype(cloud, dtype)
 
-    return out[0] if single else out
+    # 2. Turn the nans into +/-inf: point k, coordinate d gets the sign of bit d of k.
+    if value == "inf":
+        xp, _ = get_backend(out)
+        k = arange(n_total, 'int64', ref)[:, None]
+        d = arange(D, 'int64', ref)[None, :]
+        signs = astype(1 - 2 * ((k // 2 ** (D - 1 - d)) % 2), dtype)   # (n_total, D)
+        out = xp.where(xp.isnan(out), signs * float('inf'), out)
+
+    return out
