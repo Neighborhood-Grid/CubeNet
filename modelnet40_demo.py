@@ -142,8 +142,8 @@ def main():
     path = modelnet_path(category, args.num)
     print(f"Loading {path}")
 
-    # 16^3 points, so that they exactly fill a 16 x 16 x 16 grid.
-    x = read_off(path, sample=16**3)
+    # 16^3 points, so that they exactly fill a 32 x 32 x 32 grid.
+    x = read_off(path, sample=32**3)
     print(f"Point cloud: {x.shape}")
 
     # Smallest cubic grid that holds all the points; padding fills the
